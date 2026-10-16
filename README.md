@@ -41,7 +41,7 @@ Everything the Laravel app does, route by route — see **[PARITY.md](PARITY.md)
 | `DATABASE_URL`, `SESSION_SECRET` | always |
 | `APP_URL` | links inside emails |
 | `LEGACY_PUBLIC_DIR` | uploads shared with Laravel's `public/` (default `../public`) |
-| `MAILGUN_DOMAIN`, `MAILGUN_SECRET` (+ `MAIL_FROM`) | real email; without them emails are saved to `.outbox/` |
+| `MAIL_ENABLED`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_SECURE`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_NAME`, `MAIL_FROM_ADDRESS` | real email over SMTP; with `MAIL_ENABLED=false` or no `MAIL_HOST`, emails are saved to `.outbox/` and email verification is skipped |
 | `VEHICLESMART_APPID` | looking up registrations that aren't cached in `vehicledatas` |
 | `GETADDRESS_API_KEY` | postcodes that aren't in `postcodes` yet |
 

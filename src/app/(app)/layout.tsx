@@ -5,6 +5,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { ResendVerification } from "@/components/site/AuthForms";
 import { unreadCount } from "@/lib/chat";
 import { db } from "@/lib/db";
+import { mailEnabled } from "@/lib/mail/send";
 import { SIDEBAR_COOKIE } from "@/lib/nav";
 import { getSession, IMPERSONATOR_COOKIE, isStaff } from "@/lib/session";
 
@@ -15,8 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const jar = await cookies();
   const impersonating = jar.has(IMPERSONATOR_COOKIE);
   const mini = jar.get(SIDEBAR_COOKIE)?.value === "mini";
-  // Laravel's 'verified' middleware guarded the mechanic area (staff log-in-as skips it).
-  const unverified = s.role === "mechanic" && !impersonating && !(await db.users.findUnique({ where: { id: BigInt(s.id) }, select: { email_verified_at: true } }))?.email_verified_at;
+  // Mechanics and customers must verify their email first (staff log-in-as skips it; so does MAIL_ENABLED=false).
+  const unverified = mailEnabled && s.kind === "user" && !impersonating && !(await db.users.findUnique({ where: { id: BigInt(s.id) }, select: { email_verified_at: true } }))?.email_verified_at;
   const notifications = isStaff(s)
     ? (await db.notifications.findMany({ where: { seen: false, receiver: "admin" }, orderBy: { id: "desc" }, take: 30 })).map((n) => ({
         id: Number(n.id),

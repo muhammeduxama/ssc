@@ -131,14 +131,15 @@ const legacyAdmin: [string, string][] = [
   ["/email/resend", "/email/verify"],
 ];
 
-/** Sent on every response. HSTS only in production (it would pin localhost to https). */
+/** Sent on every response. HSTS only when served over https (it would pin localhost or a LAN IP to https). */
+const https = process.env.APP_URL ? process.env.APP_URL.startsWith("https://") : process.env.NODE_ENV === "production";
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(self \"https://js.stripe.com\")" },
-  ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
+  ...(https ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
 ];
 
 const nextConfig: NextConfig = {

@@ -9,7 +9,7 @@ import { isFile, saveUpload, uploadProblem } from "@/lib/files";
 import { queueMail } from "@/lib/mail/send";
 import { requireDocs } from "@/lib/mail/templates";
 import { ACCREDITATIONS, NOTIFY_PREFS, QUALIFICATIONS, normalisePostcode } from "@/lib/mechanic/profile";
-import { createSession, getSession, IMPERSONATOR_COOKIE, isStaff, SESSION_COOKIE } from "@/lib/session";
+import { createSession, getSession, IMPERSONATOR_COOKIE, isStaff, secureCookies, SESSION_COOKIE } from "@/lib/session";
 
 export type Result = { ok: boolean; message: string; errors?: Record<string, string> };
 
@@ -215,7 +215,7 @@ export async function loginAsUser(id: number) {
   if (!u) redirect("/admin/mechanics");
   const jar = await cookies();
   const current = jar.get(SESSION_COOKIE)?.value;
-  if (current) jar.set(IMPERSONATOR_COOKIE, current, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 8 });
+  if (current) jar.set(IMPERSONATOR_COOKIE, current, { httpOnly: true, sameSite: "lax", secure: secureCookies, path: "/", maxAge: 60 * 60 * 8 });
   await createSession({ kind: "user", id: String(u.id), role: Number(u.role_id) === 1 ? "mechanic" : "customer", name: `${u.fname} ${u.lname}`.trim(), email: u.email });
   redirect("/dashboard");
 }
@@ -224,7 +224,7 @@ export async function stopImpersonating() {
   const jar = await cookies();
   const back = jar.get(IMPERSONATOR_COOKIE)?.value;
   if (!back) redirect("/login");
-  jar.set(SESSION_COOKIE, back, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 7 });
+  jar.set(SESSION_COOKIE, back, { httpOnly: true, sameSite: "lax", secure: secureCookies, path: "/", maxAge: 60 * 60 * 24 * 7 });
   jar.delete(IMPERSONATOR_COOKIE);
   redirect("/dashboard");
 }

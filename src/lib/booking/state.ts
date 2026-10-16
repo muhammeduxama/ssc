@@ -2,7 +2,7 @@ import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { sessionSecret } from "@/lib/session";
+import { secureCookies, sessionSecret } from "@/lib/session";
 
 const COOKIE = "ssc-booking";
 const key = new TextEncoder().encode(sessionSecret());
@@ -31,7 +31,7 @@ export async function getBooking(): Promise<Booking | null> {
 
 export async function setBooking(b: Booking) {
   const token = await new SignJWT({ b }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("2d").sign(key);
-  (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 48 });
+  (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: "lax", secure: secureCookies, path: "/", maxAge: 60 * 60 * 48 });
 }
 
 export async function updateBooking(patch: Partial<Booking>) {

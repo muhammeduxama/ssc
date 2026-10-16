@@ -1,6 +1,7 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { createSession, getSession } from "@/lib/session";
 
@@ -21,6 +22,13 @@ export async function currentCustomer() {
   const s = await getSession();
   if (!s || s.kind !== "user" || s.role !== "customer") return null;
   return db.users.findUnique({ where: { id: BigInt(s.id) } });
+}
+
+/** For portal pages: pages render alongside their layout, so they can't rely on the layout's redirect. */
+export async function requireCustomer() {
+  const me = await currentCustomer();
+  if (!me) redirect((await getSession()) ? "/dashboard" : "/login");
+  return me;
 }
 
 type Guest = { first_name?: string; last_name?: string; email?: string; password?: string; phone?: string };

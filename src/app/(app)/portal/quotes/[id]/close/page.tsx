@@ -4,7 +4,7 @@ import { closeQuoteForm } from "@/app/actions/portal";
 import { ActionForm } from "@/components/portal/ActionForm";
 import { CloseQuoteFields } from "@/components/portal/CloseQuoteFields";
 import { PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Change or close quote" };
@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Change or close quote" };
 /** PortalController@modifyQuote — "I want to change / close my quote". */
 export default async function CloseQuotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const o = /^\d+$/.test(id) ? await db.orders.findFirst({ where: { id: BigInt(id), user_id: me.id, order_for: "repairs" }, include: { orderassigns: { take: 1 } } }) : null;
   if (!o || o.orderassigns.length) redirect("/portal/quotes");
   return (

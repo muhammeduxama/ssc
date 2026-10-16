@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { bookAdminQuote } from "@/app/actions/portal";
 import { ScheduleForm } from "@/components/booking/ScheduleForm";
 import { PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 import { carOf } from "@/lib/portal";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Book your quote" };
 /** QuoteController@acceptAdminQuote — book the quote SSC prepared. */
 export default async function BookAdminQuote({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const o = /^\d+$/.test(id) ? await db.orders.findFirst({ where: { id: BigInt(id), user_id: me.id }, include: { postcodes: { include: { cities: true } }, adminquotes: { take: 1, include: { adminquotedetails: true } } } }) : null;
   const q = o?.adminquotes[0];
   if (!o || !q) redirect("/portal/quotes");

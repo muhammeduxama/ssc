@@ -5,7 +5,7 @@ import { sendQuoteChat } from "@/app/actions/portal";
 import { ActionForm } from "@/components/portal/ActionForm";
 import { PageHeader } from "@/components/ui";
 import { asset } from "@/lib/asset";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { dateTime } from "@/lib/format";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Messages with SSC" };
 /** PortalController@showMessage / @quoteChat — the customer side of the SSC quote chat (quotechats). */
 export default async function QuoteChat({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const o = /^\d+$/.test(id) ? await db.orders.findFirst({ where: { id: BigInt(id), user_id: me.id }, include: { quotechats: { orderBy: { id: "asc" } } } }) : null;
   if (!o) redirect("/portal/quotes");
   return (

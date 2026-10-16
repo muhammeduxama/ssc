@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AskQuestion } from "@/components/portal/AskQuestion";
 import { PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 import { carOf } from "@/lib/portal";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Quote details" };
 /** PortalController@quoteDetails — one mechanic's quote (owner only; Laravel had no ownership check). */
 export default async function RequestDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const r = /^\d+$/.test(id)
     ? await db.orderrequests.findFirst({ where: { id: BigInt(id), orders: { user_id: me.id } }, include: { users: true, orders: { include: { ordertracks: { take: 1, include: { services: { select: { name: true } } } } } }, orderrequestquotes: { take: 1, include: { orderrequestquotelabours: true, orderrequestquoteparts: true } } } })
     : null;

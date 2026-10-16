@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { MechanicQuotes } from "@/components/portal/MechanicQuotes";
 import { ActionsMenu } from "@/components/portal/OrderCard";
 import { PageHeader, StatusBadge } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 import { carOf, orderCardInclude, paid } from "@/lib/portal";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Booking" };
 /** PortalController@viewOrder */
 export default async function PortalOrder({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const o = /^\d+$/.test(id)
     ? await db.orders.findFirst({
         where: { id: BigInt(id), user_id: me.id },

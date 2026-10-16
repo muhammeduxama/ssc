@@ -3,14 +3,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { OrderCard } from "@/components/portal/OrderCard";
 import { Empty, PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { loadCardOrders } from "@/lib/portal";
 
 export const metadata: Metadata = { title: "My bookings" };
 
 /** PortalController@orders — bookings (assigned, or service/MOT orders), not cancelled. */
 export default async function PortalOrders() {
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const orders = (await loadCardOrders({ user_id: me.id, NOT: { status: "rejected" } })).filter((o) => o.orderassigns.length || o.order_for === "inspection and mot");
   return (
     <>

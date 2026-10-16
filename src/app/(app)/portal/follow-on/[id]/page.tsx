@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { acceptFollowOn, rejectFollowOn } from "@/app/actions/portal";
 import { ActionButton } from "@/components/portal/ActionForm";
 import { PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 import { carOf } from "@/lib/portal";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Follow-on quote" };
 /** PortalController@viewQuote — a mechanic's follow-on quote with accept / reject. */
 export default async function FollowOn({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const q = /^\d+$/.test(id)
     ? await db.orderquotes.findFirst({ where: { id: BigInt(id), orderassigns: { orders: { user_id: me.id } } }, include: { orderquotelabours: true, orderquoteparts: true, orderassigns: { include: { orders: { include: { postcodes: { include: { cities: { include: { counties: true } } } } } } } } } })
     : null;

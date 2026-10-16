@@ -4,7 +4,7 @@ import { acceptFollowOn, rejectFollowOn } from "@/app/actions/portal";
 import { ActionButton } from "@/components/portal/ActionForm";
 import { ActionsMenu } from "@/components/portal/OrderCard";
 import { Empty, PageHeader } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 import { carOf, loadCardOrders } from "@/lib/portal";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Expired & follow-on quotes" };
 
 /** PortalController@expiredQuotes — requests older than 7 days plus mechanics' follow-on quotes. */
 export default async function ExpiredQuotes() {
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const weekAgo = daysAgo(7);
   const [expired, followOns] = await Promise.all([
     loadCardOrders({ user_id: me.id, orderassigns: { none: {} }, orderrequests: { some: {} }, created_at: { lt: weekAgo } }),

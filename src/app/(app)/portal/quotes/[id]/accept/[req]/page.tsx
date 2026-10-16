@@ -5,7 +5,7 @@ import { ScheduleForm } from "@/components/booking/ScheduleForm";
 import { SaveQuoteCard } from "@/components/portal/SaveQuoteCard";
 import { PageHeader } from "@/components/ui";
 import { setupIntentFor } from "@/lib/booking/setup";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Book this mechanic" };
 /** PaymentController@acceptMechanicQuotation — choose availability (if none yet), then save a card. */
 export default async function AcceptMechanicQuote({ params }: { params: Promise<{ id: string; req: string }> }) {
   const { id, req } = await params;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   if (!/^\d+$/.test(id) || !/^\d+$/.test(req)) redirect("/portal/quotes");
   const o = await db.orders.findFirst({ where: { id: BigInt(id), user_id: me.id }, include: { timeslots: true, orderassigns: { take: 1 } } });
   const r = o ? await db.orderrequests.findFirst({ where: { id: BigInt(req), order_id: o.id }, include: { users: true, orderrequestquotes: { take: 1, include: { orderrequestquotelabours: true, orderrequestquoteparts: true } } } }) : null;

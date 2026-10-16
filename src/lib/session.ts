@@ -16,6 +16,11 @@ export function sessionSecret() {
   return "dev-secret-change-me-dev-secret-change-me";
 }
 const key = new TextEncoder().encode(sessionSecret());
+/**
+ * Secure cookies only when the app is served over https. Keying this on NODE_ENV broke `next start`
+ * on http://localhost or a LAN IP: Safari (and every browser on a LAN IP) drops Secure cookies sent over http.
+ */
+export const secureCookies = process.env.APP_URL ? process.env.APP_URL.startsWith("https://") : process.env.NODE_ENV === "production";
 
 export type Role = "admin" | "editor" | "mechanic" | "customer";
 export type Session = {
@@ -53,7 +58,7 @@ export async function createSession(s: Session) {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookies,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });

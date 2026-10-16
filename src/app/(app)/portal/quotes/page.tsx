@@ -2,7 +2,7 @@ import { FileText, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Empty, PageHeader, StatusBadge } from "@/components/ui";
-import { currentCustomer } from "@/lib/customer";
+import { requireCustomer } from "@/lib/customer";
 import { carOf, loadCardOrders } from "@/lib/portal";
 
 export const metadata: Metadata = { title: "My quotes" };
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "My quotes" };
 /** PortalController@quotes / @quotesClosed */
 export default async function PortalQuotes({ searchParams }: { searchParams: Promise<{ closed?: string }> }) {
   const closed = !!(await searchParams).closed;
-  const me = (await currentCustomer())!;
+  const me = await requireCustomer();
   const rows = (await loadCardOrders({ user_id: me.id, order_for: "repairs", ...(closed ? { status: "rejected" } : { NOT: { status: "rejected" } }) })).filter((o) => !o.orderassigns.length);
   const tabs: [string, string, boolean][] = [["/portal/quotes", "Open", !closed], ["/portal/quotes?closed=1", "Closed", closed], ["/portal/quotes/expired", "Expired & follow-on", false]];
   return (

@@ -20,15 +20,15 @@ export default async function QuoteChat({ params }: { params: Promise<{ id: stri
   return (
     <>
       <PageHeader eyebrow={`Quote #${o.id}`} title="Messages with Smart Servicing Centre" />
-      <div className="card flex max-w-3xl flex-col">
-        <ol className="max-h-[60vh] space-y-3 overflow-y-auto p-5">
+      <div className="card flex h-[calc(100dvh-17rem)] min-h-[260px] max-w-3xl flex-col overflow-hidden">
+        <ol className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-4">
           {o.quotechats.length === 0 && <li className="text-sm text-muted">No messages yet.</li>}
           {o.quotechats.map((m) => {
             const mine = m.sender === "customer";
             return (
               <li key={String(m.id)} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${mine ? "bg-brand text-on-brand" : "bg-sunken"}`}>
-                  {m.message && <p className="whitespace-pre-line">{m.message}</p>}
+                  {m.message && <p className="whitespace-pre-line [overflow-wrap:anywhere]">{m.message}</p>}
                   {m.file && <a href={asset(m.file)} target="_blank" className="mt-1 flex items-center gap-1 underline"><Paperclip size={12} /> Attachment</a>}
                   <div className={`mt-1 text-[10px] ${mine ? "opacity-75" : "text-muted"}`}>{mine ? "You" : "SSC"} · {dateTime(m.created_at)}</div>
                 </div>
@@ -36,10 +36,10 @@ export default async function QuoteChat({ params }: { params: Promise<{ id: stri
             );
           })}
         </ol>
-        <div className="border-t border-line p-4">
+        <div className="shrink-0 border-t border-line p-3">
           <ActionForm action={sendQuoteChat.bind(null, Number(o.id))} submit="Send" reset className="space-y-3">
             <label className="sr-only" htmlFor="qc-msg">Message</label>
-            <textarea id="qc-msg" name="message" rows={3} placeholder="Write a message…" className="input" />
+            <textarea id="qc-msg" name="message" rows={1} placeholder="Write a message…" className="input" />
             <input type="file" name="file" aria-label="Attach a file" className="block text-sm" />
           </ActionForm>
         </div>

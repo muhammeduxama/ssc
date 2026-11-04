@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Change password" };
 export default function Password() {
   return (
     <>
-      <PageHeader eyebrow="Account" title="Change password" />
+      <PageHeader eyebrow="Account" title="Change password" description="Choose a strong password to protect your account." />
       <div className="card max-w-xl p-6"><PasswordForm /></div>
     </>
   );

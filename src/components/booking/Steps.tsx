@@ -1,26 +1,14 @@
-const STEPS = ["Car & location", "Services", "Date & time", "Payment details"];
+import { CarBrandLogo } from "@/components/CarBrandLogo";
+import { Check, MapPin } from "lucide-react";
 
-export function Steps({ at }: { at: 1 | 2 | 3 | 4 }) {
-  return (
-    <ol className="flex flex-wrap gap-2" aria-label="Booking progress">
-      {STEPS.map((s, i) => {
-        const n = i + 1;
-        const state = n < at ? "done" : n === at ? "current" : "todo";
-        return (
-          <li key={s} aria-current={state === "current" ? "step" : undefined} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium ${state === "current" ? "border-brand bg-brand text-on-brand" : state === "done" ? "border-brand text-brand" : "border-line text-muted"}`}>
-            <span className="font-mono">{n}</span> {s}
-          </li>
-        );
-      })}
-    </ol>
-  );
+const STEPS = ["Your vehicle", "Choose services", "Visit details", "Confirm booking"];
+export function Steps({ at, complete = false, quote = false }: { at: 1 | 2 | 3 | 4; complete?: boolean; quote?: boolean }) {
+  return <ol className="booking-steps" aria-label="Booking progress">{(quote ? ["Your vehicle", "Choose a repair", "Your details", "Request sent"] : STEPS).map((s,i) => {
+    const n=i+1;const state=complete||n<at?"done":n===at?"current":"todo";
+    return <li key={s} data-state={state} aria-current={state==="current"?"step":undefined}><span className="booking-step-number">{state==="done"?<Check size={15} aria-hidden/>:n}</span><span>{s}</span>{state==="done"&&<span className="sr-only">Complete</span>}</li>;
+  })}</ol>;
 }
 
-export function CarSummary({ reg, car }: { reg: string | null; car: { make: string; model: string; fuel: string; engine: string; year: string } }) {
-  return (
-    <div>
-      <div className="inline-block rounded-md border-2 border-ink bg-accent px-3 py-1 font-mono text-lg font-bold uppercase tracking-widest text-on-accent">{reg ?? "No registration"}</div>
-      <div className="mt-2 text-sm text-muted">{[car.make, car.model, car.fuel, car.engine, car.year].filter(Boolean).join("  |  ")}</div>
-    </div>
-  );
+export function CarSummary({ reg, car, postcode }: { reg: string | null; car: { make: string; model: string; fuel: string; engine: string; year: string }; postcode?: string }) {
+  return <div className="booking-car"><CarBrandLogo make={car.make} className="car-brand-logo-compact"/><div className="min-w-0 flex-1"><strong>{car.make} {car.model}</strong><span>{[car.year,car.fuel,car.engine && `${car.engine}L`].filter(Boolean).join(" · ")}</span>{postcode&&<span className="booking-car-location"><MapPin size={12}/>{postcode.toUpperCase()}</span>}</div><span className="booking-registration">{reg || "Manual selection"}</span></div>;
 }

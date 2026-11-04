@@ -27,12 +27,12 @@ export default async function Postcodes({ searchParams }: { searchParams: Promis
         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
         <input name="q" defaultValue={sp.q} placeholder="Search postcode" className="input pl-9" />
       </form>
-      <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[900px]">
+      <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[900px] section-responsive-table">
         <thead><tr><th className="th">Postcode</th><th className="th">City</th><th className="th">County</th><th className="th">Lat</th><th className="th">Long</th><th className="th text-right">Edit</th></tr></thead>
         <tbody>{rows.map((p) => (
           <tr key={String(p.id)}>
-            <td className="td font-mono font-semibold">{p.postcode}</td><td className="td">{p.cities?.name}</td><td className="td">{p.counties?.name}</td><td className="td font-mono text-xs">{Number(p.lat).toFixed(5)}</td><td className="td font-mono text-xs">{Number(p.long).toFixed(5)}</td>
-            <td className="td"><PostcodeEditor p={{ id: Number(p.id), postcode: p.postcode, lat: Number(p.lat), long: Number(p.long), city: p.cities?.name ?? "", county: p.counties?.name ?? "" }} /></td>
+            <td className="td font-mono font-semibold" data-label="Postcode">{p.postcode}</td><td className="td" data-label="City">{p.cities?.name}</td><td className="td" data-label="County">{p.counties?.name}</td><td className="td font-mono text-xs" data-label="Lat">{Number(p.lat).toFixed(5)}</td><td className="td font-mono text-xs" data-label="Long">{Number(p.long).toFixed(5)}</td>
+            <td className="td" data-label="Edit"><PostcodeEditor p={{ id: Number(p.id), postcode: p.postcode, lat: Number(p.lat), long: Number(p.long), city: p.cities?.name ?? "", county: p.counties?.name ?? "" }} /></td>
           </tr>
         ))}</tbody>
       </table></div>

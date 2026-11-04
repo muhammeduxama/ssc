@@ -64,7 +64,7 @@ export default async function Home() {
       </section>
       {!!reviews.length && <section className="border-y border-line bg-sunken py-16 sm:py-24"><div className="site-container"><SectionTitle eyebrow="From our customers" title="Real experiences. In their words." /><ReviewCards reviews={reviews.map((r) => ({ id: Number(r.id), name: `${r.orders.users.fname} ${r.orders.users.lname}`, rating: r.overall || Math.round((r.quality + r.punctuality + r.communication) / 3), text: r.review ?? "" }))} /></div></section>}
       <ChipGrid eyebrow="Closer than you think" title="Find car care near you" items={cities.map((c) => ({ href: `/city/${c.slug}`, label: c.name }))} more="/city/all" />
-      <ChipGrid eyebrow="Your make. Your model." title="Find services for your car" items={makes.map((m) => ({ href: `/makes/${m.slug ?? ""}`, label: m.name }))} more="/make/all" tone="sunken" />
+      <ChipGrid carLogos eyebrow="Your make. Your model." title="Find services for your car" items={makes.map((m) => ({ href: `/makes/${m.slug ?? ""}`, label: m.name }))} more="/make/all" tone="sunken" />
       <section className="site-container py-16"><div className="cta-panel"><div><span className="eyebrow">One less thing on your list</span><h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Let’s get your car sorted.</h2><p className="mt-3 text-muted">Start with your registration. We’ll take it from there.</p></div><Link href="#quote" className="btn btn-primary">Get a quote <ArrowRight size={18} /></Link></div></section>
     </>
   );

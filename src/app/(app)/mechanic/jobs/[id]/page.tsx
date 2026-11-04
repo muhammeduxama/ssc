@@ -1,8 +1,8 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { DetailPage, DetailHeader, DetailMetrics } from "@/components/DetailPage";
+import { Car, MapPin, CalendarClock } from "lucide-react";
 import { notFound } from "next/navigation";
 import { JobWorkspace } from "@/components/mechanic/JobWorkspace";
-import { PageHeader, StatusBadge } from "@/components/ui";
+import { StatusBadge } from "@/components/ui";
 import { requireRole } from "@/lib/guard";
 import { jobWorkspace } from "@/lib/mechanic/jobs";
 
@@ -15,12 +15,16 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
   const j = await jobWorkspace(s.id, Number(id));
   if (!j) notFound();
   return (
-    <>
-      <Link href={j.status === "assigned" ? "/mechanic/jobs" : "/mechanic/jobs/previous"} className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"><ArrowLeft size={16} /> {j.status === "assigned" ? "Current jobs" : "Previous jobs"}</Link>
-      <PageHeader eyebrow={`Booking #${j.order.id} · ${j.order.service}`} title={j.carTitle}>
+    <DetailPage>
+      <DetailHeader back={{ href: j.status === "assigned" ? "/mechanic/jobs" : "/mechanic/jobs/previous", label: j.status === "assigned" ? "Current jobs" : "Previous jobs" }} eyebrow={`Booking #${j.order.id} · ${j.order.service}`} title={j.carTitle}>
         <StatusBadge status={j.status} />
-      </PageHeader>
+      </DetailHeader>
+      <DetailMetrics items={[
+        { label: "Vehicle", value: String(j.car.reg || "Registration not supplied"), icon: Car },
+        { label: "Location", value: j.customer.postcode, hint: j.customer.city, icon: MapPin },
+        { label: "Visit", value: j.date ? `${j.date} ${j.time || ""}` : "Not scheduled", icon: CalendarClock },
+      ]}/>
       <JobWorkspace j={j} supportThread={`${j.order.id}:s:${s.id}`} customerThread={`${j.order.id}:p:${j.customer.id}`} />
-    </>
+    </DetailPage>
   );
 }

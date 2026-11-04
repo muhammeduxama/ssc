@@ -22,7 +22,7 @@ export default async function ExpiredQuotes() {
   ]);
   return (
     <>
-      <PageHeader eyebrow="Quotes" title="Expired & follow-on quotes" />
+      <PageHeader eyebrow="Quotes" title="Expired & follow-on quotes" description="Review follow-on work from your mechanic and revisit older requests." />
       {!expired.length && !followOns.length && <Empty title="You don't have any expired quotes." />}
       {followOns.length > 0 && (
         <section className="mb-8">

@@ -1,8 +1,9 @@
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
+import { MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuoteRequestBuilder } from "@/components/mechanic/QuoteRequestBuilder";
-import { Field, PageHeader } from "@/components/ui";
+import { Field } from "@/components/ui";
 import { requireRole } from "@/lib/guard";
 import { quoteRequest } from "@/lib/mechanic/jobs";
 
@@ -14,11 +15,10 @@ export default async function QuoteRequestPage({ params }: { params: Promise<{ i
   const r = await quoteRequest(s.id, Number(id));
   if (!r) notFound();
   return (
-    <>
-      <Link href="/mechanic/quote-requests" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"><ArrowLeft size={16} /> Quote requests</Link>
-      <PageHeader eyebrow={`Repair quote #${r.order.id}`} title={r.carTitle}>
+    <DetailPage>
+      <DetailHeader back={{ href: "/mechanic/quote-requests", label: "Quote requests" }} eyebrow={`Repair quote #${r.order.id}`} title={r.carTitle}>
         <Link href="/messages" className="btn btn-secondary"><MessageSquare size={16} /> Ask the customer</Link>
-      </PageHeader>
+      </DetailHeader>
       <section className="card mb-4 p-6">
         <dl className="grid gap-4 sm:grid-cols-4">
           <Field label="Customer">{r.customer.name}</Field>
@@ -33,6 +33,6 @@ export default async function QuoteRequestPage({ params }: { params: Promise<{ i
       ) : (
         <QuoteRequestBuilder id={r.id} labours={r.quote?.labours ?? []} parts={r.quote?.parts ?? []} total={r.quote?.price ?? 0} commission={r.quote?.commission ?? 0} status={r.quote?.status ?? "NOT DELIVERED"} labourRate={r.labourRate} />
       )}
-    </>
+    </DetailPage>
   );
 }

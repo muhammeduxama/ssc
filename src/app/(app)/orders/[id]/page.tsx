@@ -1,8 +1,9 @@
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
+import { MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Field, PageHeader, StatusBadge } from "@/components/ui";
+import { Field, StatusBadge } from "@/components/ui";
 import { gbp, shortDate } from "@/lib/format";
 import { getOrder } from "@/lib/queries";
 import { getSession, isStaff } from "@/lib/session";
@@ -23,16 +24,13 @@ export default async function OrderPage({ params }: Props) {
   const staff = isStaff(s);
 
   return (
-    <>
-      <Link href="/orders" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink">
-        <ArrowLeft size={16} /> All orders
-      </Link>
-      <PageHeader eyebrow={`Order #${o.id}`} title={`${o.title} — ${o.service}`}>
+    <DetailPage>
+      <DetailHeader back={{ href: "/orders", label: "All orders" }} eyebrow={`Order #${o.id}`} title={`${o.title} — ${o.service}`}>
         <div className="flex items-center gap-3">
           <StatusBadge status={o.status} />
           <Link href="/messages" className="btn btn-secondary"><MessageSquare size={16} /> Messages</Link>
         </div>
-      </PageHeader>
+      </DetailHeader>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="space-y-4 xl:col-span-2">
@@ -63,14 +61,14 @@ export default async function OrderPage({ params }: Props) {
               <p className="px-6 pb-6 text-sm text-muted">No mechanic has been assigned yet.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[520px]">
+                <table className="w-full min-w-[520px] section-responsive-table">
                   <thead>
                     <tr><th className="th">Mechanic</th><th className="th">Visit</th><th className="th">Status</th><th className="th text-right">Price</th></tr>
                   </thead>
                   <tbody>
                     {o.assignments.map((a) => (
                       <tr key={a.id}>
-                        <td className="td">
+                        <td className="td" data-label="Mechanic">
                           <div className="font-medium">{a.mechanic}</div>
                           {staff && <div className="font-mono text-xs text-muted">{a.phone}</div>}
                           {a.services.length > 0 && (
@@ -79,9 +77,9 @@ export default async function OrderPage({ params }: Props) {
                             </ul>
                           )}
                         </td>
-                        <td className="td font-mono text-xs">{[a.date, a.time].filter(Boolean).join(" · ") || "—"}</td>
-                        <td className="td"><StatusBadge status={a.status} /></td>
-                        <td className="td text-right font-mono">{gbp(a.price)}</td>
+                        <td className="td font-mono text-xs" data-label="Visit">{[a.date, a.time].filter(Boolean).join(" · ") || "—"}</td>
+                        <td className="td" data-label="Status"><StatusBadge status={a.status} /></td>
+                        <td className="td text-right font-mono" data-label="Price">{gbp(a.price)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -124,6 +122,6 @@ export default async function OrderPage({ params }: Props) {
           )}
         </div>
       </div>
-    </>
+    </DetailPage>
   );
 }

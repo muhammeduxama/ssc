@@ -2,6 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ResourceForm } from "@/components/crud/ResourceForm";
+import { CarBrandLogo } from "@/components/CarBrandLogo";
+import { asset } from "@/lib/asset";
 import { PageHeader } from "@/components/ui";
 import { clientFields, getRecord } from "@/lib/crud/engine";
 import { getResource } from "@/lib/crud/registry";
@@ -25,7 +27,7 @@ export default async function EditPage({ params, searchParams }: Props) {
         <ArrowLeft size={16} /> {r.title}
       </Link>
       <PageHeader eyebrow={`${r.group} · #${id}`} title={`Edit ${r.singular}`} />
-      <ResourceForm fields={fields} values={values} isEdit action={saveAction.bind(null, r.slug, id, back)} submitLabel="Save changes" />
+      <ResourceForm fields={fields} values={values} imagePreviews={r.slug === "makes" ? { icon: <CarBrandLogo make={String(values.name ?? "")} fallbackSrc={values.icon ? asset(String(values.icon)) : undefined}/> } : undefined} isEdit action={saveAction.bind(null, r.slug, id, back)} submitLabel="Save changes" />
     </>
   );
 }

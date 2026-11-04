@@ -161,7 +161,7 @@ export const quoteReady = (o: QuoteOrder, q: AdminQuote) => {
         { button: { label: "Book this service", href: loginLink(o.users.id, `/portal/quotes/${o.id}/book`) } },
         ...(q.notes ? ([{ h: "A note from our team" }, { quote: q.notes }] as Block[]) : []),
         { list: WHY_US, title: "Why book with us" },
-        { html: `<p style="margin:14px 0 0;font-size:13px;line-height:20px;color:#5e554e">Don't need this any more? <a href="${appUrl("/user/portal/quotes")}" style="color:#b9532f">Close this quote</a>.</p>` },
+        { html: `<p style="margin:14px 0 0;font-size:13px;line-height:20px;color:#526179">Don't need this any more? <a href="${appUrl("/user/portal/quotes")}" style="color:#1d4ed8">Close this quote</a>.</p>` },
       ],
     }),
   };
@@ -267,7 +267,7 @@ export const generalEmail = (to: string, subject: string, messageHtml: string, f
   html: emailLayout({
     title: subject,
     blocks: [
-      { html: `<div style="font-size:15px;line-height:24px;color:#1f1a17">${messageHtml}</div>` },
+      { html: `<div style="font-size:15px;line-height:24px;color:#172033">${messageHtml}</div>` },
       ...(files.length ? [{ links: files.map((f, i) => [`Attachment ${i + 1}`, appUrl(`/legacy/${f.src}`)] as [string, string]) }] : []),
     ],
   }),

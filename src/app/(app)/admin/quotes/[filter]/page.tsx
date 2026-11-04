@@ -1,37 +1,36 @@
+import { DataTable } from "@/components/DataTable";
+import { SectionTabs } from "@/components/SectionTabs";
 import { Eye, Search, Send } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CloseQuoteButton } from "@/components/admin/CloseQuote";
-import { Empty, PageHeader, StatusBadge } from "@/components/ui";
+import { Empty, PageHeader, Pagination, StatusBadge } from "@/components/ui";
 import { QUOTE_FILTERS, listQuotes, type QuoteFilter } from "@/lib/admin/quotes";
 import { dateTime } from "@/lib/format";
 import { requireStaff } from "@/lib/guard";
 
-type Props = { params: Promise<{ filter: string }>; searchParams: Promise<{ q?: string }> };
+type Props = { params: Promise<{ filter: string }>; searchParams: Promise<{ q?: string; page?: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: QUOTE_FILTERS[(await params).filter as QuoteFilter] ?? "Quotes" };
 }
-const TONE = { ok: "bg-ok-soft/50", warn: "bg-warn-soft/60", danger: "bg-danger-soft/50" } as const;
 
 export default async function QuotesPage({ params, searchParams }: Props) {
   await requireStaff();
   const f = (await params).filter as QuoteFilter;
   if (!(f in QUOTE_FILTERS)) notFound();
-  const { q } = await searchParams;
+  const { q, page: requestedPage } = await searchParams;
   const rows = await listQuotes(f, q);
+  const pageSize = 25;
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const page = Math.min(pages, Math.max(1, Math.trunc(Number(requestedPage) || 1)));
+  const visible = rows.slice((page - 1) * pageSize, page * pageSize);
+  const pageHref = (n: number) => `/admin/quotes/${f}?${new URLSearchParams({ ...(q ? { q } : {}), page: String(n) })}`;
   return (
     <>
-      <PageHeader eyebrow={`Quotes · ${rows.length}`} title={QUOTE_FILTERS[f]} />
+      <PageHeader eyebrow={`Quotes · ${rows.length}`} title={QUOTE_FILTERS[f]} description="Review repair requests, build estimates and track mechanic responses." />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <nav className="flex flex-wrap gap-1 rounded-lg border border-line bg-raised p-1" aria-label="Quote views">
-          {(Object.keys(QUOTE_FILTERS) as QuoteFilter[]).map((k) => (
-            <Link key={k} href={`/admin/quotes/${k}`} aria-current={f === k ? "page" : undefined} className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition ${f === k ? "bg-brand text-on-brand" : "text-muted hover:bg-sunken hover:text-ink"}`}>
-              {QUOTE_FILTERS[k].replace(/ \(.*\)$/, "")}
-            </Link>
-          ))}
-          <Link href="/admin/quotes/estimates" className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-muted hover:bg-sunken hover:text-ink">Sent estimates</Link>
-        </nav>
+        <SectionTabs label="Quote view" items={[...(Object.keys(QUOTE_FILTERS) as QuoteFilter[]).map((k) => ({href:`/admin/quotes/${k}`,label:QUOTE_FILTERS[k].replace(/ \(.*\)$/, ""),active:f===k})),{href:"/admin/quotes/estimates",label:"Sent estimates",active:false}]} />
         <form className="relative w-full sm:w-72">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input name="q" defaultValue={q} placeholder="Search reg, name, city, #id" className="input pl-9" />
@@ -40,41 +39,17 @@ export default async function QuotesPage({ params, searchParams }: Props) {
       {rows.length === 0 ? (
         <Empty title="No quotes here" />
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px]">
-              <thead>
-                <tr>
-                  <th className="th">#</th><th className="th">Quote</th><th className="th">Reg</th><th className="th">Customer</th><th className="th">City</th><th className="th">Work required</th><th className="th">Notified</th><th className="th">Responded</th><th className="th">Viewed by</th><th className="th">Dated</th><th className="th text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} className={TONE[r.tone]}>
-                    <td className="td font-mono text-xs text-muted">{i + 1}</td>
-                    <td className="td font-mono text-xs font-semibold"><Link href={`/admin/quotes/view/${r.id}`} className="text-brand hover:underline">#{r.id}</Link><div className="mt-1"><StatusBadge status={r.status} /></div></td>
-                    <td className="td"><span className="rounded border border-ink/20 bg-[#f7ce35] px-1.5 py-0.5 font-mono text-xs font-semibold text-black">{r.reg}</span></td>
-                    <td className="td">{r.customer}</td>
-                    <td className="td text-xs">{r.city}<div className="font-mono text-muted">{r.postcode}</div></td>
-                    <td className="td max-w-52 text-xs">{r.notes || "—"}</td>
-                    <td className="td"><Link href={`/admin/quotes/view/${r.id}?tab=mechanics`} className="btn btn-secondary !px-2.5 !py-1 !text-xs">{r.notified}{r.adminSent ? " · quote sent" : ""}</Link></td>
-                    <td className="td font-mono text-sm">{r.responded} mechanics</td>
-                    <td className="td font-mono text-sm">{r.viewed} mechanics</td>
-                    <td className="td font-mono text-xs text-muted">{dateTime(r.created)}</td>
-                    <td className="td">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/admin/quotes/view/${r.id}`} aria-label="View quote" title="View" className="rounded-md p-1.5 text-brand hover:bg-brand-soft"><Eye size={16} /></Link>
-                        <Link href={`/admin/quotes/view/${r.id}?tab=build`} aria-label="Build and send quote" title="Send quote" className="rounded-md p-1.5 text-brand hover:bg-brand-soft"><Send size={16} /></Link>
-                        {r.status !== "rejected" && <CloseQuoteButton id={r.id} />}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div className="quotes-list"><DataTable density="compact" caption="Repair quotes" columns={[
+          {key:"quote",label:"Quote",primary:true},{key:"customer",label:"Customer"},{key:"work",label:"Work requested"},{key:"status",label:"Status"},{key:"responses",label:"Responses"},{key:"date",label:"Received"},
+        ]} rows={visible.map((r)=>({id:r.id,cells:{
+          quote:<div className="record-booking"><Link href={`/admin/quotes/view/${r.id}`} className="record-title">#{r.id}</Link><span className="registration-plate">{r.reg || "No registration"}</span></div>,
+          status:<StatusBadge status={r.status}/>,
+          customer:<div>{r.customer}<p className="record-subtitle">{r.city} · {r.postcode}</p></div>,work:<p className="record-work" title={r.notes || undefined}>{r.notes || "Details pending"}</p>,
+          responses:<div className="quote-responses"><Link href={`/admin/quotes/view/${r.id}?tab=mechanics`} className="text-brand" title={`${r.responded} of ${r.notified} mechanics replied`}>{r.responded}/{r.notified} replied</Link><p className="record-subtitle">{r.viewed} viewed{r.adminSent ? " · Estimate sent" : ""}</p></div>,date:<span className="record-date">{dateTime(r.created)}</span>,
+        },actions:<><Link href={`/admin/quotes/view/${r.id}`} className="record-action quote-icon-action" aria-label={`View quote #${r.id}`} title="View quote"><Eye size={15} aria-hidden/></Link><Link href={`/admin/quotes/view/${r.id}?tab=build`} className="record-action quote-icon-action" aria-label={`Build quote #${r.id}`} title="Build quote"><Send size={15} aria-hidden/></Link>{r.status!=="rejected"&&<CloseQuoteButton id={r.id} compact/>}</>}))}/></div>
+
       )}
+      <Pagination page={page} pages={pages} total={rows.length} pageSize={pageSize} href={pageHref} />
     </>
   );
 }

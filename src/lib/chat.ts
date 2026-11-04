@@ -36,10 +36,11 @@ const name = (u: { fname: string; lname: string; company?: string | null } | und
   u ? (u.company || `${u.fname} ${u.lname}`).trim() : "Unknown";
 
 export function parseKey(key: string) {
+  if (!/^\d+:[sp]:\d+$/.test(key)) return null;
   const [o, k, u] = key.split(":");
   const orderId = Number(o);
   const userId = Number(u);
-  if (!Number.isInteger(orderId) || !Number.isInteger(userId) || (k !== "s" && k !== "p")) return null;
+  if (!Number.isSafeInteger(orderId) || orderId <= 0 || !Number.isSafeInteger(userId) || userId <= 0 || (k !== "s" && k !== "p")) return null;
   return { orderId, userId, kind: k === "s" ? ("support" as const) : ("direct" as const) };
 }
 
@@ -132,13 +133,48 @@ async function canAccess(s: Session, orderId: number) {
   return s.role === "mechanic" && !!(await db.orderrequests.findFirst({ where: { order_id: BigInt(orderId), user_id: BigInt(s.id) }, select: { id: true } }));
 }
 
+/** A direct conversation must connect the booking's customer and one of its invited or assigned mechanics. */
+async function canMessagePeer(s: Session, orderId: number, peerId: number) {
+  if (isStaff(s) || String(peerId) === s.id || !(await canAccess(s, orderId))) return false;
+  const order = await db.orders.findUnique({ where: { id: BigInt(orderId) }, select: { user_id: true } });
+  if (!order) return false;
+  const me = BigInt(s.id);
+  const peer = BigInt(peerId);
+  if (order.user_id !== me && order.user_id !== peer) return false;
+  const mechanic = order.user_id === me ? peer : me;
+  const [assigned, invited] = await Promise.all([
+    db.orderassigns.findFirst({ where: { order_id: BigInt(orderId), user_id: mechanic }, select: { id: true } }),
+    db.orderrequests.findFirst({ where: { order_id: BigInt(orderId), user_id: mechanic }, select: { id: true } }),
+  ]);
+  return !!(assigned || invited);
+}
+
+async function canSupport(s: Session, orderId: number, userId: number) {
+  if (!isStaff(s)) return String(userId) === s.id && await canAccess(s, orderId);
+  const person = await db.users.findUnique({ where: { id: BigInt(userId) }, select: { id: true, role_id: true } });
+  if (!person) return false;
+  return canAccess({ ...s, kind: "user", id: String(person.id), role: person.role_id === BigInt(1) ? "mechanic" : "customer" }, orderId);
+}
+
+/** Include an authorised empty conversation when following a booking's Chat button. */
+export async function resolveThread(s: Session, key: string): Promise<Thread | null> {
+  const k = parseKey(key);
+  if (!k) return null;
+  if (!(k.kind === "support" ? await canSupport(s, k.orderId, k.userId) : await canMessagePeer(s, k.orderId, k.userId))) return null;
+  const [labels, peer] = await Promise.all([
+    orderLabel([k.orderId]),
+    db.users.findUnique({ where: { id: BigInt(k.userId) }, select: { fname: true, lname: true, company: true } }),
+  ]);
+  return { key, orderId: k.orderId, title: k.kind === "support" && !isStaff(s) ? "Smart Servicing Centre support" : name(peer ?? undefined), subtitle: labels.get(k.orderId) ?? `Order #${k.orderId}`, kind: k.kind, last: "", lastAt: null, unread: 0 };
+}
+
 export async function getMessages(s: Session, key: string): Promise<Message[] | null> {
   const k = parseKey(key);
   if (!k) return null;
 
   if (k.kind === "support") {
     // Staff may read any support thread; users only their own.
-    if (!isStaff(s) && String(k.userId) !== s.id) return null;
+    if (!(await canSupport(s, k.orderId, k.userId))) return null;
     const rows = await db.adminresolutions.findMany({ where: { order_id: BigInt(k.orderId), user_id: BigInt(k.userId) }, orderBy: { id: "asc" } });
     const person = isStaff(s) ? name((await db.users.findUnique({ where: { id: BigInt(k.userId) }, select: { fname: true, lname: true, company: true } })) ?? undefined) : "";
     // Mark the other side's messages as read.
@@ -157,7 +193,7 @@ export async function getMessages(s: Session, key: string): Promise<Message[] | 
     }));
   }
 
-  if (isStaff(s) || !(await canAccess(s, k.orderId))) return null;
+  if (!(await canMessagePeer(s, k.orderId, k.userId))) return null;
   const me = BigInt(s.id);
   const peer = BigInt(k.userId);
   const rows = await db.resolutions.findMany({
@@ -184,7 +220,7 @@ export async function sendMessage(s: Session, key: string, text: string) {
   const now = new Date();
 
   if (k.kind === "support") {
-    if (!isStaff(s) && String(k.userId) !== s.id) return false;
+    if (!(await canSupport(s, k.orderId, k.userId))) return false;
     await db.adminresolutions.create({
       data: {
         order_id: BigInt(k.orderId),
@@ -206,7 +242,7 @@ export async function sendMessage(s: Session, key: string, text: string) {
     }
     return true;
   }
-  if (isStaff(s) || !(await canAccess(s, k.orderId))) return false;
+  if (!(await canMessagePeer(s, k.orderId, k.userId))) return false;
   await db.resolutions.create({
     data: { order_id: BigInt(k.orderId), sender_id: BigInt(s.id), receiver_id: BigInt(k.userId), admin: false, message: body, seen: 0, created_at: now, updated_at: now },
   });

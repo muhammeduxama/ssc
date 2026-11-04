@@ -10,7 +10,7 @@ import { ActionButton } from "./ActionForm";
 export function ActionsMenu({ o }: { o: CardOrder }) {
   const a = o.orderassigns[0];
   const items: [number, string][] = [];
-  if (o.status !== "completed") {
+  if (o.status !== "completed" && o.status !== "rejected") {
     items.push([1, "I want to change my booking"], [2, "I want to cancel"]);
     if (a) items.push([3, "Message my mechanic"]);
     if (a?.start_at && isPast(a.start_at)) items.push([4, "My mechanic is late"]);
@@ -36,7 +36,7 @@ export function OrderCard({ o }: { o: CardOrder }) {
   const lines = [...o.ordertracks.map((t) => t.services.name), ...(a?.assignlabours.map((l) => l.description ?? "") ?? [])].filter(Boolean);
   return (
     <article className="card overflow-visible">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-3 py-3 sm:px-5">
         <div className="flex items-center gap-3">
           <span className="font-mono text-sm font-semibold">ORD #{String(o.id)}</span>
           <StatusBadge status={o.status === "rejected" ? "cancelled" : o.status} />
@@ -45,13 +45,13 @@ export function OrderCard({ o }: { o: CardOrder }) {
           {open && (
             <Link href={`/get-payment-info/${o.id}`} className="btn btn-secondary !py-1.5"><CreditCard size={14} /> {card ? "Change my card" : "Update card"} {gbp(o.price)}</Link>
           )}
-          {a && <Link href={`/messages?thread=${o.id}:p:${a.user_id}`} className="btn btn-secondary !py-1.5" aria-label="Chat with my mechanic"><MessageSquare size={14} /></Link>}
-          <Link href={`/portal/orders/${o.id}`} className="btn btn-secondary !py-1.5" aria-label="View booking"><Eye size={14} /></Link>
+          {a && <Link href={`/messages?thread=${o.id}:p:${a.user_id}`} className="btn btn-secondary !py-1.5" aria-label="Chat with my mechanic"><MessageSquare size={14} /> Chat</Link>}
+          <Link href={`/portal/orders/${o.id}`} className="btn btn-secondary !py-1.5" aria-label="View booking"><Eye size={14} /> View</Link>
           <ActionsMenu o={o} />
         </div>
       </header>
       {open && !card && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-warn-soft px-5 py-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-warn-soft px-3 py-3 sm:px-5 text-sm">
           <span><b>Unverified order!</b> You need to update your payment information to place this order.</span>
           <span className="flex gap-2">
             <Link href={`/get-payment-info/${o.id}`} className="font-semibold text-brand underline">Update now?</Link>
@@ -59,7 +59,7 @@ export function OrderCard({ o }: { o: CardOrder }) {
           </span>
         </div>
       )}
-      <dl className="grid gap-x-6 gap-y-4 p-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="grid gap-x-6 gap-y-3 p-3 sm:gap-y-4 sm:p-5 text-sm sm:grid-cols-2 lg:grid-cols-3">
         <Item k="Vehicle"><span className="font-mono uppercase">{car.reg}</span> · {car.line}</Item>
         <Item k="Work location">{[o.users.house_no, o.users.street].filter(Boolean).join(", ")}<br />{[o.postcodes.postcode, o.postcodes.cities.name, o.postcodes.cities.counties.name].join(", ")}</Item>
         <Item k="Schedule">{a?.date ? `${a.date} ${a.time ?? ""}` : a ? "Collaborate with your mechanic for arrival schedule" : "Not yet accepted by mechanic"}</Item>
@@ -71,7 +71,7 @@ export function OrderCard({ o }: { o: CardOrder }) {
           <dd className="mt-1 flex flex-wrap gap-1.5">{lines.map((l, i) => <span key={i} className="pill">{l}</span>)}</dd>
         </div>
       </dl>
-      <footer className="flex justify-between border-t border-line px-5 py-3 text-sm">
+      <footer className="flex justify-between border-t border-line px-3 py-3 sm:px-5 text-sm">
         <span>Paid amount <b>{gbp(o.status === "completed" ? o.orderpayments[0]?.total_payment : 0)}</b></span>
         <span>Total <b className="font-display text-lg">{gbp(o.price)}</b></span>
       </footer>
@@ -83,7 +83,7 @@ function Item({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <div>
       <dt className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted">{k}</dt>
-      <dd className="mt-1">{children}</dd>
+      <dd className="mt-1 [overflow-wrap:anywhere]">{children}</dd>
     </div>
   );
 }

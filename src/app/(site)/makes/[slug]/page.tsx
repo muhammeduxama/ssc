@@ -26,11 +26,11 @@ export default async function MakePage({ params }: { params: Promise<{ slug: str
   return (
     <>
       <SchemaCode code={page.schema_code} />
-      <QuoteHero what={make.name} />
+      <QuoteHero what={make.name} make={make.name} />
       <ArticleGuide html={page.detail} title={`${make.name} servicing and repairs`}>
         <PriceTable title={`Popular repairs for ${make.name}`} rows={stats} showNotes />
       </ArticleGuide>
-      <ChipGrid eyebrow="Makes & models" title="We service most makes & models" items={makes.map((m) => ({ href: `/makes/${m.slug ?? ""}`, label: m.name }))} more="/make/all" tone="sunken" />
+      <ChipGrid carLogos eyebrow="Makes & models" title="We service most makes & models" items={makes.map((m) => ({ href: `/makes/${m.slug ?? ""}`, label: m.name }))} more="/make/all" tone="sunken" />
     </>
   );
 }

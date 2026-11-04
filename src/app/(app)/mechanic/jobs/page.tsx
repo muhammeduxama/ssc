@@ -10,7 +10,7 @@ export default async function CurrentJobs() {
   const rows = await myJobs(s.id, "assigned");
   return (
     <>
-      <PageHeader eyebrow={`${rows.length} booked`} title="Current jobs"><Link href="/mechanic/jobs/previous" className="btn btn-secondary">Previous jobs</Link></PageHeader>
+      <PageHeader eyebrow={`${rows.length} booked`} title="Current jobs" description="Your accepted work, appointment details and job workspaces."><Link href="/mechanic/jobs/previous" className="btn btn-secondary">Previous jobs</Link></PageHeader>
       <JobList rows={rows} empty="No jobs booked right now" />
     </>
   );

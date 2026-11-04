@@ -10,7 +10,7 @@ export default async function PreviousJobs() {
   const rows = await myJobs(s.id, "completed");
   return (
     <>
-      <PageHeader eyebrow={`${rows.length} completed`} title="Previous jobs"><Link href="/mechanic/jobs" className="btn btn-secondary">Current jobs</Link></PageHeader>
+      <PageHeader eyebrow={`${rows.length} completed`} title="Previous jobs" description="Review your completed work and booking history."><Link href="/mechanic/jobs" className="btn btn-secondary">Current jobs</Link></PageHeader>
       <p className="-mt-4 mb-6 text-sm text-muted">Open a job to send the customer a follow-on quote.</p>
       <JobList rows={rows} empty="No completed jobs yet" />
     </>

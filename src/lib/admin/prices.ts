@@ -36,6 +36,7 @@ export async function rangeOptions() {
     makes: makes.map((m) => m.name),
     fuels: fuels.map((f) => f.fuel).sort(),
     years: Array.from({ length: Math.max(0, to - from + 1) }, (_, i) => from + i),
-    engines: engines.map((e) => Number(e.name).toFixed(1)),
+    // Different stored names (e.g. "0.7" and "0.70") can produce the same option.
+    engines: [...new Set(engines.map((e) => Number(e.name).toFixed(1)))].sort((a, b) => Number(a) - Number(b)),
   };
 }

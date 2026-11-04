@@ -8,7 +8,7 @@ import { NotCustomer } from "@/components/booking/NotCustomer";
 import { currentCustomer } from "@/lib/customer";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { PageHead } from "@/components/site/blocks";
+import { BookingLayout } from "@/components/booking/BookingLayout";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Request a repair quote" };
@@ -21,33 +21,30 @@ export default async function RepairQuote({ params }: { params: Promise<{ id: st
   if (!b || !service) redirect("/");
   const [me, s] = await Promise.all([currentCustomer(), getSession()]);
   return (
-    <>
-    <PageHead eyebrow="Repair quote" title="We need a few more details to complete your quote request" />
-    <section className="site-container py-10 sm:py-12">
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+    <BookingLayout step={3} quote title="Tell us about your repair" description="A few details help us gather suitable quotes for your car. You can review the quotes before choosing how to proceed." back={{href:"/choose-category",label:"Back to services"}}>
+      <div className="booking-columns">
         {s && !me ? <NotCustomer name={s.name} back={`/services/${id}/repairs`} /> : <RepairQuoteForm
           serviceId={Number(service.id)}
           serviceName={service.name}
           guest={!me}
           postcode={b.postcode.postcode}
           reg={b.booking.reg ?? "UNKNOWN"}
-          city={me?.city || b.postcode.cities.name}
+          city={b.postcode.cities.name || me?.city || ""}
           county={b.postcode.counties.name}
           street={me?.street ?? ""}
           houseNo={me?.house_no ?? ""}
         />}
-        <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
+        <aside className="booking-sidebar space-y-3">
           <div className="card space-y-4 p-5">
             <CarSummary reg={b.booking.reg} car={b.car} />
             <div className="rounded-lg bg-brand-soft p-4 text-sm">
-              <div className="font-display text-lg font-semibold text-brand">Save 30% vs average prices</div>
-              <p className="mt-1">We will gather quotes from the most trusted mobile mechanics and garages near you after you post your job request.</p>
+              <div className="font-display text-lg font-semibold text-brand">A quote tailored to your repair</div>
+              <p className="mt-1">Your request will be reviewed so suitable mechanics and garages can provide repair quotes.</p>
             </div>
           </div>
           <Link href="/choose-category" className="btn btn-secondary w-full">Back to services</Link>
         </aside>
       </div>
-    </section>
-    </>
+    </BookingLayout>
   );
 }

@@ -1,4 +1,8 @@
-import { ArrowLeft, CheckCircle2, Pencil } from "lucide-react";
+import { formatTimeSlot } from "@/lib/time";
+import { VehicleMark } from "@/components/VehicleMark";
+import { SectionTabs } from "@/components/SectionTabs";
+import { DetailPage, DetailHeader, DetailMetrics, DetailSection } from "@/components/DetailPage";
+import { CheckCircle2, Pencil, Wallet, CalendarClock, Wrench, CreditCard } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,7 +10,7 @@ import { LinesEditor } from "@/components/admin/LinesEditor";
 import MechanicsMap from "@/components/admin/MapLoader";
 import { CancelButtons, GarageRequest, SscNotes } from "@/components/admin/OrderActions";
 import { OrderChat } from "@/components/admin/OrderChat";
-import { Field, PageHeader, StatusBadge } from "@/components/ui";
+import { Field, StatusBadge } from "@/components/ui";
 import { asset } from "@/lib/asset";
 import { getAdminOrder } from "@/lib/admin/orders";
 import { dateTime, gbp } from "@/lib/format";
@@ -24,7 +28,8 @@ export default async function AdminOrderPage({ params, searchParams }: Props) {
   if (!/^\d+$/.test(id)) notFound();
   const o = await getAdminOrder(Number(id));
   if (!o) notFound();
-  const { tab = "info" } = await searchParams;
+  const requestedTab = (await searchParams).tab;
+  const tab = ["info", "services", "chat"].includes(requestedTab ?? "") ? requestedTab! : "info";
   const a = o.assigned;
   const tabs = [
     { id: "info", label: "Order information" },
@@ -33,67 +38,49 @@ export default async function AdminOrderPage({ params, searchParams }: Props) {
   ];
 
   return (
-    <>
-      <Link href="/admin/orders/all" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink">
-        <ArrowLeft size={16} /> All orders
-      </Link>
-      <PageHeader eyebrow={`Order #${o.id} · ${o.service}`} title={o.carTitle}>
+    <DetailPage>
+      <DetailHeader back={{ href: "/admin/orders/all", label: "All orders" }} eyebrow={`Order #${o.id} · ${o.service}`} title={o.carTitle}>
         <div className="flex items-center gap-3">
           <StatusBadge status={o.status} />
           <span className="rounded-lg bg-brand px-3 py-1.5 font-display text-lg font-semibold text-on-brand">{gbp(o.price)}</span>
           <Link href={`/admin/orders/view/${o.id}/edit`} className="btn btn-secondary"><Pencil size={16} /> Edit</Link>
         </div>
-      </PageHeader>
+      </DetailHeader>
 
-      <nav className="mb-6 flex gap-1 border-b border-line" aria-label="Order sections">
-        {tabs.map((t) => (
-          <Link key={t.id} href={`?tab=${t.id}`} aria-current={tab === t.id ? "page" : undefined} className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition ${tab === t.id ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}>
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <DetailMetrics items={[
+        { label: "Booking total", value: gbp(a ? a.price : o.price), icon: Wallet, hint: o.service },
+        { label: "Visit", value: a?.date ? `${a.date} ${a.time || ""}` : "Awaiting confirmation", icon: CalendarClock },
+        { label: "Assigned mechanic", value: a?.company || "Not assigned", icon: Wrench },
+        { label: "Payment", value: o.payment?.status || "Uncaptured", icon: CreditCard },
+      ]}/>
+      <SectionTabs label="Record sections" items={tabs.map((t) => ({ href: `?tab=${t.id}`, label: t.label, active: tab === t.id }))}/>
 
       {tab === "info" && (
         <div className="space-y-4">
-          <section className="card p-6">
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-              {o.car.logo && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={asset(o.car.logo)} alt="" className="h-10 w-12 object-contain" />
-              )}
+          <section className="detail-info">
+            <div className="card detail-vehicle-strip">
+              <VehicleMark make={o.car.make} src={asset(o.car.logo)}/>
               {[`${o.car.make ?? ""} ${o.car.model ?? ""}`, o.car.year, o.car.engine, o.car.fuel].filter(Boolean).map((x) => (
                 <span key={String(x)} className="pill border-line text-muted">{x}</span>
               ))}
               <span className="ml-auto rounded-md border-2 border-black bg-[#f7ce35] px-3 py-1 font-mono text-lg font-bold tracking-widest text-black">{o.car.reg}</span>
             </div>
-            <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Order #">{o.id}</Field>
-              <Field label="Client name">{o.customer.name}</Field>
-              <Field label="Client phone"><span className="font-mono">{o.customer.phone}</span></Field>
-              <Field label="Email">{o.customer.email}</Field>
-              <Field label="Location">{[o.location.street, o.location.city, o.location.county].filter(Boolean).join(" ")} · {o.location.postcode}</Field>
-              <Field label="Time slots">
+            <div className="detail-info-grid">
+              <DetailSection title="Customer & location"><dl className="detail-fields"><Field label="Client name">{o.customer.name}</Field><Field label="Client phone">{o.customer.phone ? <a href={`tel:${o.customer.phone}`} className="detail-contact">{o.customer.phone}</a> : "—"}</Field><Field label="Email">{o.customer.email ? <a href={`mailto:${o.customer.email}`} className="detail-contact">{o.customer.email}</a> : "—"}</Field><Field label="Location">{[o.location.street, o.location.city, o.location.county].filter(Boolean).join(" ")} · {o.location.postcode}</Field></dl></DetailSection>
+              <DetailSection title="Visit & collection"><dl className="detail-fields"><Field label="Time slots">
                 {o.timeslots.length ? (
-                  <span className="flex flex-wrap gap-1">{o.timeslots.map((t, i) => <span key={i} className="pill border-line">{t.time} {t.date}</span>)}</span>
+                  <span className="flex flex-wrap gap-1">{o.timeslots.map((t, i) => <span key={i} className="pill border-line">{formatTimeSlot(t.time)} · {t.date}</span>)}</span>
                 ) : null}
-              </Field>
-              <Field label="Garage">{a?.company}</Field>
-              <Field label="Scheduled">{a ? (a.time && a.date ? `${a.time} ${a.date}` : "Not set by mechanic") : null}</Field>
-              <Field label="Order status"><span className="capitalize">{o.status}</span></Field>
-              <Field label="Payment status">{o.payment ? o.payment.status : "Uncaptured"}</Field>
-              <Field label="Completed date">{a?.completedAt ? dateTime(a.completedAt) : null}</Field>
-              <Field label="Created date">{dateTime(o.created)}</Field>
-              <Field label="Collection & delivery">
+              </Field><Field label="Garage">{a?.company}</Field><Field label="Scheduled">{a ? (a.time && a.date ? `${a.time} ${a.date}` : "Not set by mechanic") : null}</Field><Field label="Collection & delivery">
                 <span className="flex flex-wrap gap-1">
                   {o.collection && <span className="pill border-line">Collection and delivery by a garage</span>}
                   <span className={`pill border-transparent ${o.driveable ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>{o.driveable ? "Vehicle is drivable" : "Vehicle is not drivable"}</span>
                   <span className="pill border-line">{o.fiveMileDrop ? "Customer will drop off" : "Customer won’t drop off"}</span>
                 </span>
-              </Field>
-              <Field label="Work required">{o.work.join(", ")}</Field>
-              <Field label="Parts">{o.parts.length ? o.parts.map((p) => `${p.name} = ${p.price.toFixed(2)}`).join(" · ") : null}</Field>
-              <Field label="Additional information">{o.notes || "Not provided"}</Field>
-            </dl>
+              </Field></dl></DetailSection>
+              <DetailSection title="Booking information"><dl className="detail-fields"><Field label="Order #">{o.id}</Field><Field label="Order status"><span className="capitalize">{o.status}</span></Field><Field label="Created date">{dateTime(o.created)}</Field><Field label="Completed date">{a?.completedAt ? dateTime(a.completedAt) : null}</Field></dl></DetailSection>
+              <DetailSection title="Work & payment"><dl className="detail-fields"><Field label="Work required">{o.work.join(", ")}</Field><Field label="Parts">{o.parts.length ? o.parts.map((p) => `${p.name} = ${p.price.toFixed(2)}`).join(" · ") : null}</Field><Field label="Payment status">{o.payment ? o.payment.status : "Uncaptured"}</Field><Field label="Additional information">{o.notes || "Not provided"}</Field></dl></DetailSection>
+            </div>
             {a && (a.labours.length > 0 || a.parts.length > 0) && (
               <div className="mt-6 grid gap-4 rounded-lg bg-sunken p-4 sm:grid-cols-2">
                 <div>
@@ -112,7 +99,7 @@ export default async function AdminOrderPage({ params, searchParams }: Props) {
                 {o.adminQuote.map((d, i) => <p key={i} className="text-sm">{d.name} = {d.price.toFixed(2)} ({d.type})</p>)}
               </div>
             )}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+            <div className="card detail-action-panel">
               <CancelButtons id={o.id} status={o.status} />
               {a && <Link href={`?tab=chat`} className="btn btn-primary">Chat with mechanic</Link>}
             </div>
@@ -263,6 +250,6 @@ export default async function AdminOrderPage({ params, searchParams }: Props) {
         ) : (
           <p className="rounded-lg bg-sunken p-6 text-sm text-muted">Chat opens once a mechanic has accepted this order.</p>
         ))}
-    </>
+    </DetailPage>
   );
 }

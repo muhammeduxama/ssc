@@ -1,77 +1,29 @@
-import { Eye, MessageSquare, Pencil } from "lucide-react";
+import { CreditCard, Eye, MessageSquare, Pencil } from "lucide-react";
 import Link from "next/link";
-import { StatusBadge } from "@/components/ui";
+import { DataTable } from "@/components/DataTable";
+import { Empty, StatusBadge } from "@/components/ui";
 import type { listAdminOrders } from "@/lib/admin/orders";
 import { dateTime } from "@/lib/format";
 
-const TONE = { ok: "bg-ok-soft/50", warn: "bg-warn-soft/60", danger: "bg-danger-soft/50" } as const;
+type Orders = Awaited<ReturnType<typeof listAdminOrders>>;
 
-export function OrdersTable({ rows }: { rows: Awaited<ReturnType<typeof listAdminOrders>> }) {
-  return (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px]">
-              <thead>
-                <tr>
-                  <th className="th">#</th>
-                  <th className="th">Order</th>
-                  <th className="th">Reg</th>
-                  <th className="th">Customer</th>
-                  <th className="th">Work required</th>
-                  <th className="th">City</th>
-                  <th className="th">Status</th>
-                  <th className="th">Notified</th>
-                  <th className="th">Accepted by</th>
-                  <th className="th">Dated</th>
-                  <th className="th text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((o, i) => (
-                  <tr key={o.id} className={TONE[o.tone]}>
-                    <td className="td font-mono text-xs text-muted">{i + 1}</td>
-                    <td className="td font-mono text-xs font-semibold"><Link href={`/admin/orders/view/${o.id}`} className="text-brand hover:underline">#{o.id}</Link></td>
-                    <td className="td"><span className="rounded border border-ink/20 bg-[#f7ce35] px-1.5 py-0.5 font-mono text-xs font-semibold text-black">{o.reg}</span></td>
-                    <td className="td">{o.customer}</td>
-                    <td className="td max-w-56 text-xs">{o.work.map((w) => w.split(" ").slice(0, 3).join(" ")).join(", ") || "—"}</td>
-                    <td className="td text-xs">{o.city}<div className="font-mono text-muted">{o.postcode}</div></td>
-                    <td className="td">
-                      <div className="flex flex-col items-start gap-1">
-                        <StatusBadge status={o.status} />
-                        <span className={`pill border-transparent ${o.verified ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>{o.verified ? "verified" : "unverified"}</span>
-                      </div>
-                    </td>
-                    <td className="td">
-                      <Link href={`/admin/orders/view/${o.id}#notified`} className="btn btn-secondary !px-2.5 !py-1 !text-xs">{o.notified} mechanics</Link>
-                    </td>
-                    <td className="td text-xs">
-                      {o.accepted ? (
-                        <div className="space-y-0.5">
-                          <div className="font-semibold">{o.accepted.company}</div>
-                          <div className="font-mono text-muted">{dateTime(o.accepted.at)}</div>
-                          {o.accepted.slot && <div className="font-mono text-muted">{o.accepted.slot}</div>}
-                        </div>
-                      ) : (
-                        <span className="pill border-transparent bg-danger-soft text-danger">Not accepted yet</span>
-                      )}
-                    </td>
-                    <td className="td font-mono text-xs text-muted">{dateTime(o.created)}</td>
-                    <td className="td">
-                      <div className="flex justify-end gap-1">
-                        {o.accepted && o.mechanicId && (
-                          <Link href={`/admin/orders/view/${o.id}?tab=chat`} title={`${o.messages} messages`} aria-label={`${o.messages} messages`} className="rounded-md p-1.5 text-brand hover:bg-brand-soft">
-                            <MessageSquare size={16} />
-                          </Link>
-                        )}
-                        <Link href={`/admin/orders/view/${o.id}`} title="View" aria-label="View order" className="rounded-md p-1.5 text-brand hover:bg-brand-soft"><Eye size={16} /></Link>
-                        <Link href={`/admin/orders/view/${o.id}/edit`} title="Edit" aria-label="Edit order" className="rounded-md p-1.5 text-muted hover:bg-sunken"><Pencil size={16} /></Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-  );
+export function OrdersTable({ rows, variant = "full" }: { rows: Orders; variant?: "full" | "queue" }) {
+  if (!rows.length) return <Empty title="No bookings to show" body="New bookings will appear here when customers request a service." />;
+  const queue = variant === "queue";
+  return <div className={`orders-list ${queue ? "orders-queue" : ""}`}><DataTable density="compact" caption={queue ? "Booking queue" : "Bookings"} columns={queue ? [
+    { key: "booking", label: "Booking & customer", primary: true }, { key: "work", label: "Service" }, { key: "progress", label: "Status" },
+  ] : [
+    { key: "booking", label: "Booking", primary: true }, { key: "customer", label: "Customer" },
+    { key: "work", label: "Work & location" }, { key: "progress", label: "Progress" }, { key: "created", label: "Created" },
+  ]} rows={rows.map((o) => ({ id: o.id, cells: {
+    booking: queue ? <div className="queue-booking"><Link href={`/admin/orders/view/${o.id}`} className="queue-booking-title"><span>#{o.id}</span><strong>{o.customer}</strong></Link><span className="record-subtitle">{o.reg || "Not supplied"} · {o.postcode}</span></div> : <div className="record-booking"><Link href={`/admin/orders/view/${o.id}`} className="record-title">#{o.id}</Link><span className="registration-plate">{o.reg || "Not supplied"}</span></div>,
+    customer: <span className="font-medium">{o.customer}</span>,
+    work: <div><p className="record-work" title={o.work.join(", ")}>{o.work.join(", ") || "Details pending"}</p>{!queue && <p className="record-subtitle">{[o.city, o.postcode].filter(Boolean).join(" · ")}</p>}</div>,
+    progress: <div className="orders-progress"><div className="orders-progress-top"><StatusBadge status={o.status} />{!queue && <span className={o.verified ? "text-ok" : "text-warn"} role="img" aria-label={o.verified ? "Card saved" : "Card needed"} title={o.verified ? "Card saved" : "Card needed"}><CreditCard size={14} aria-hidden/></span>}</div>{!queue && <p className="record-subtitle">{o.accepted ? `Assigned to ${o.accepted.company}` : `${o.notified} mechanics notified`}</p>}</div>,
+    created: <span className="record-date">{dateTime(o.created)}</span>,
+  }, actions: <>
+    <Link href={`/admin/orders/view/${o.id}`} className="record-action orders-icon-action" aria-label={`View booking #${o.id}`} title="View booking"><Eye size={15} aria-hidden/></Link>
+    <Link href={`/admin/orders/view/${o.id}/edit`} className="record-action orders-icon-action" aria-label={`Edit booking #${o.id}`} title="Edit booking"><Pencil size={15} aria-hidden/></Link>
+    {!queue && o.accepted && o.mechanicId && <Link href={`/admin/orders/view/${o.id}?tab=chat`} className="record-action orders-icon-action" aria-label={`Messages for booking #${o.id}`} title={`${o.messages} messages`}><MessageSquare size={15} aria-hidden/></Link>}
+  </> }))}/></div>;
 }

@@ -43,7 +43,7 @@ export function SentList({ rows }: { rows: { id: number; subject: string; to: st
       </div>
       <ul className="divide-y divide-line">
         {rows.map((r) => (
-          <li key={r.id} className="flex items-center gap-3 px-4 py-3 hover:bg-sunken/60">
+          <li key={r.id} className="mail-list-row flex items-center gap-3 px-4 py-3 hover:bg-sunken/60">
             <input type="checkbox" aria-label={`Select ${r.subject}`} checked={sel.includes(r.id)} onChange={(e) => setSel(e.target.checked ? [...sel, r.id] : sel.filter((x) => x !== r.id))} className="h-4 w-4" />
             <a href={`/admin/mail/${r.id}`} className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold">{r.subject || "(no subject)"}</div>

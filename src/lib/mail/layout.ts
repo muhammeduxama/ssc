@@ -13,16 +13,16 @@ export const appUrl = (p = "") => `${(process.env.APP_URL || "http://localhost:3
 
 /** The site's theme tokens (src/app/globals.css), inlined because email clients ignore stylesheets. */
 const C = {
-  page: "#f7f4f1",
+  page: "#f8fafc",
   card: "#ffffff",
-  line: "#ebe5df",
-  ink: "#1f1a17",
-  muted: "#5e554e",
-  brand: "#b9532f",
-  brandSoft: "#f9e9e1",
-  accent: "#d97757",
-  night: "#fbf6f2",
-  nightLine: "#efe4dc",
+  line: "#e2e8f0",
+  ink: "#172033",
+  muted: "#526179",
+  brand: "#1d4ed8",
+  brandSoft: "#eaf1ff",
+  accent: "#1d4ed8",
+  night: "#f6f9ff",
+  nightLine: "#e1e9f6",
   ok: "#1e7a45",
   okSoft: "#dff1e6",
   warn: "#8a5a07",
@@ -60,7 +60,7 @@ function block(b: Block): string {
   if ("note" in b) return para(esc(b.note), 12, C.muted);
   if ("html" in b) return b.html;
   if ("button" in b)
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0"><tr><td style="background:${C.brand};border-radius:10px"><a href="${esc(b.button.href)}" style="display:inline-block;padding:14px 26px;font-family:${SANS};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px">${esc(b.button.label)} &rarr;</a></td></tr></table>`;
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0"><tr><td style="background:${C.accent};border-radius:10px"><a href="${esc(b.button.href)}" style="display:inline-block;padding:14px 26px;font-family:${SANS};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px">${esc(b.button.label)} &rarr;</a></td></tr></table>`;
   if ("list" in b)
     return `${label(b.title)}<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px">${b.list
       .map((x) => `<tr><td valign="top" style="padding:9px 10px 0 0"><div style="width:6px;height:6px;border-radius:3px;background:${C.accent}"></div></td><td style="padding:2px 0;font-size:15px;line-height:24px;color:${C.ink}">${esc(x)}</td></tr>`)

@@ -1,4 +1,5 @@
 "use client";
+import { VehicleMark } from "@/components/VehicleMark";
 import { Bug, Camera, CheckCircle2, LifeBuoy, MapPin, MessageSquare, Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -48,19 +49,19 @@ function useRun() {
 
 function Block({ title, action, children, tone }: { title: string; action?: React.ReactNode; children: React.ReactNode; tone?: "note" }) {
   return (
-    <section className={`card overflow-hidden ${tone === "note" ? "border-warn" : ""}`}>
-      <header className={`flex items-center justify-between gap-3 border-b border-line px-5 py-3 ${tone === "note" ? "bg-warn-soft/60" : ""}`}>
+    <section className={`card detail-section overflow-hidden ${tone === "note" ? "border-warn" : ""}`}>
+      <header className={`detail-section-header ${tone === "note" ? "bg-warn-soft/60" : ""}`}>
         <h2 className="font-display text-base font-semibold">{title}</h2>
         {action}
       </header>
-      <div className="p-5">{children}</div>
+      <div className="detail-section-body">{children}</div>
     </section>
   );
 }
 
 const Row = ({ name, price, onEdit, onDelete, readOnly }: { name: string; price: number; onEdit?: () => void; onDelete?: () => void; readOnly?: boolean }) => (
   <li className="flex items-center gap-3 border-t border-line py-2.5 first:border-t-0">
-    <span className="flex-1 text-sm font-medium">{name}</span>
+    <span className="min-w-0 flex-1 break-words text-sm font-medium">{name}</span>
     <span className="font-mono text-sm">{gbp(price)}</span>
     {!readOnly && (
       <>
@@ -103,7 +104,7 @@ export function JobWorkspace({ j, supportThread, customerThread }: { j: Job; sup
   const charge = (withReason?: string) => run(() => chargeCustomer(j.id, withReason), (r) => r.ok && setModal(null));
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+    <div className="detail-columns">
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
           <Link href={`/messages?thread=${encodeURIComponent(supportThread)}`} className="btn btn-secondary"><LifeBuoy size={16} /> Smart Servicing</Link>
@@ -134,10 +135,7 @@ export function JobWorkspace({ j, supportThread, customerThread }: { j: Job; sup
 
         <Block title="Vehicle information" action={live && <button onClick={() => setModal("mileage")} className="btn btn-ghost !px-2 !py-1 !text-xs"><Pencil size={14} /> Mileage</button>}>
           <div className="flex flex-wrap items-center gap-2">
-            {j.car.logo && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={asset(j.car.logo)} alt="" className="h-9 w-11 object-contain" />
-            )}
+            <VehicleMark make={j.car.make} src={asset(j.car.logo)}/>
             {[j.car.model, j.car.engine, j.car.year, j.car.fuel].filter(Boolean).map((x) => <span key={String(x)} className="pill border-line">{x}</span>)}
             <span className="ml-auto rounded-md border-2 border-black bg-[#f7ce35] px-3 py-1 font-mono font-bold tracking-widest text-black">{String(j.car.reg ?? "").toUpperCase()}</span>
           </div>
@@ -232,7 +230,8 @@ export function JobWorkspace({ j, supportThread, customerThread }: { j: Job; sup
       </div>
 
       <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
-        <section className="card p-5">
+        <section className="card detail-summary">
+          <h2 className="detail-summary-title">Job earnings</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted">Total labour</span><span className="font-mono">{gbp(totalLabour)}</span></div>
             <div className="flex justify-between"><span className="text-muted">Total parts</span><span className="font-mono">{gbp(totalParts)}</span></div>

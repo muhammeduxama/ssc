@@ -21,11 +21,11 @@ export function RepairQuoteForm(p: { serviceId: number; serviceName: string; gue
           if (!r.ok) setError(r.message);
         });
       }}
-      className="space-y-6"
+      className="booking-details-form"
     >
       {p.guest && <GuestFields />}
-      <fieldset className="card grid gap-4 p-5 sm:grid-cols-2">
-        <legend className="px-1 font-display text-lg font-semibold">Vehicle registration &amp; postcode</legend>
+      <fieldset className="booking-form-section grid gap-4 sm:grid-cols-2">
+        <legend className="px-1 font-display text-lg font-semibold">Your vehicle &amp; repair location</legend>
         <div><label className="label" htmlFor="q-postcode">Postal code</label><input id="q-postcode" value={p.postcode} readOnly className="input" /></div>
         <div><label className="label" htmlFor="q-reg">Vehicle registration number</label><input id="q-reg" value={p.reg} readOnly className="input uppercase" /></div>
         <div><label className="label" htmlFor="q-house">House no / house name *</label><input id="q-house" name="house_no" required defaultValue={p.houseNo} className="input" /></div>
@@ -40,7 +40,7 @@ export function RepairQuoteForm(p: { serviceId: number; serviceName: string; gue
       </fieldset>
       <TermsBox />
       {error && <p role="alert" className="rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm">{error}</p>}
-      <button disabled={pending} className="btn btn-primary !px-8 !py-3">{pending ? <Loader2 size={18} className="animate-spin" /> : "Submit"}</button>
+      <button disabled={pending} className="btn btn-primary !px-8 !py-3">{pending ? <Loader2 size={18} className="animate-spin" /> : "Request repair quotes"}</button>
     </form>
   );
 }

@@ -94,9 +94,9 @@ const isFutureSlot = (s: { date: string; time: string }) => {
 const yes = (v: FormDataEntryValue | null) => String(v) === "Yes";
 
 function needAnswers(form: FormData): string | null {
-  if (!form.get("rd_safe_drive")) return "Select option, either your vehicle is drive able?";
-  if (!form.get("rd_mobile_mech")) return "Select option about garage free collection & delivery service";
-  if (!form.get("drop_off_location")) return "Select option drop off the vehicle at a vetted garage within 5 miles";
+  if (!form.get("rd_safe_drive")) return "Please tell us whether your vehicle is safe to drive.";
+  if (!form.get("rd_mobile_mech")) return "Please tell us whether a garage can collect and return your car.";
+  if (!form.get("drop_off_location")) return "Please tell us whether you can drop your car off at a nearby garage.";
   return null;
 }
 

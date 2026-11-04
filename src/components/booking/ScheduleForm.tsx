@@ -7,9 +7,9 @@ import { SlotPicker, type Slot } from "./SlotPicker";
 
 type R = { ok: boolean; message: string; link?: string };
 const QUESTIONS: [string, string][] = [
-  ["rd_mobile_mech", "Are you happy with garage free collection & delivery service?"],
+  ["rd_mobile_mech", "Can a garage collect and return your car?"],
   ["rd_safe_drive", "Is your vehicle drivable?"],
-  ["drop_off_location", "Are you happy to drop off the vehicle at a vetted garage within 5 miles?"],
+  ["drop_off_location", "Could you drop your car off at a garage within 5 miles?"],
 ];
 
 /** Address + availability + collection answers (admin-quote booking, mechanic-quote booking, bespoke). */
@@ -32,28 +32,28 @@ export function ScheduleForm({ action, address, children, submit = "Proceed to n
           else setError(r.message);
         });
       }}
-      className="space-y-6"
+      className="booking-details-form"
     >
       {children}
       {address && (
-        <fieldset className="card grid gap-4 p-5 sm:grid-cols-3">
+        <fieldset className="booking-form-section grid gap-4 sm:grid-cols-3">
           <legend className="px-1 font-display text-lg font-semibold">Your address</legend>
           <div><label className="label" htmlFor="s-house">House no / house name *</label><input id="s-house" name="house_no" required defaultValue={address.house} className="input" /></div>
           <div><label className="label" htmlFor="s-street">Street address *</label><input id="s-street" name="street" required defaultValue={address.street} className="input" /></div>
           <div><label className="label" htmlFor="s-city">City *</label><input id="s-city" name="city" required defaultValue={address.city} className="input" /></div>
         </fieldset>
       )}
-      <fieldset className="card p-5">
+      <fieldset className="booking-form-section">
         <legend className="px-1 font-display text-lg font-semibold">Schedule date</legend>
         <p className="mb-4 text-sm text-muted">Please select ALL of the times when you are available across multiple days. Once a mechanic has been assigned you will receive a 2-hour arrival window.</p>
         <SlotPicker value={slots} onChange={setSlots} />
       </fieldset>
-      <fieldset className="card space-y-3 p-5">
+      <fieldset className="booking-form-section space-y-3">
         <legend className="px-1 font-display text-lg font-semibold">Collection and delivery</legend>
         {QUESTIONS.map(([name, q]) => (
-          <div key={name} role="radiogroup" aria-label={q} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-sunken px-4 py-3">
+          <div key={name} role="radiogroup" aria-label={q} className="booking-preference">
             <span className="text-sm font-medium">{q}</span>
-            <span className="flex gap-4 text-sm">{["Yes", "No"].map((v) => <label key={v} className="flex items-center gap-1.5"><input type="radio" name={name} value={v} required className="accent-[var(--brand)]" /> {v}</label>)}</span>
+            <span className="booking-radio-options">{["Yes", "No"].map((v) => <label key={v} className="booking-radio-option"><input type="radio" name={name} value={v} required className="accent-[var(--brand)]" /> {v}</label>)}</span>
           </div>
         ))}
         <div><label className="label" htmlFor="s-notes">Additional information (optional) — where should we collect your car?</label><textarea id="s-notes" name="notes" rows={3} className="input" /></div>

@@ -1,8 +1,7 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
 import { notFound } from "next/navigation";
 import { BespokeEditor } from "@/components/mechanic/BespokeForms";
-import { Field, PageHeader } from "@/components/ui";
+import { Field } from "@/components/ui";
 import { db } from "@/lib/db";
 import { carTitle, parseCar } from "@/lib/format";
 import { requireRole } from "@/lib/guard";
@@ -21,9 +20,8 @@ export default async function BespokePage({ params }: { params: Promise<{ id: st
   const c = parseCar(b.car_data);
   const u = b.bespokeusers[0];
   return (
-    <>
-      <Link href="/mechanic/bespokes" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"><ArrowLeft size={16} /> Bespoke quotes</Link>
-      <PageHeader eyebrow={`Estimate #${id}`} title={carTitle(c)} />
+    <DetailPage>
+      <DetailHeader back={{ href: "/mechanic/bespokes", label: "Bespoke quotes" }} eyebrow={`Estimate #${id}`} title={carTitle(c)} />
       <section className="card mb-4 p-6">
         <dl className="grid gap-4 sm:grid-cols-4">
           <Field label="Customer">{u ? [u.fname, u.lname].filter(Boolean).join(" ") || "—" : "—"}</Field>
@@ -34,6 +32,6 @@ export default async function BespokePage({ params }: { params: Promise<{ id: st
         {b.service && <p className="mt-4 rounded-lg bg-sunken p-3 text-sm">{b.service}</p>}
       </section>
       <BespokeEditor id={Number(b.id)} status={b.status} total={Number(b.price)} labourRate={rate} labours={b.bespokelabours.map((l) => ({ id: Number(l.id), name: l.name, price: Number(l.price), hour: l.hour }))} parts={b.bespokeparts.map((p) => ({ id: Number(p.id), name: p.name, price: Number(p.price) }))} />
-    </>
+    </DetailPage>
   );
 }

@@ -90,14 +90,14 @@ export function RangePriceForm({ serviceId, labourHour, parts, o }: { serviceId:
       <div>
         <h3 className="mb-3 font-display text-base font-semibold">Part prices for this range</h3>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
+          <table className="w-full min-w-[640px] section-responsive-table">
             <thead><tr><th className="th">Part</th><th className="th">Current rule</th><th className="th w-40">Price (£)</th></tr></thead>
             <tbody>
               {parts.map((p) => (
                 <tr key={p.id}>
-                  <td className="td">{p.name}</td>
-                  <td className="td font-mono text-xs text-muted">make {p.make} · year {p.year} · engine {p.engine} · fuel {p.fuel}</td>
-                  <td className="td"><input aria-label={`Price for ${p.name}`} inputMode="decimal" value={prices[p.id]} onChange={(e) => setPrices({ ...prices, [p.id]: e.target.value })} className="input" /></td>
+                  <td className="td" data-label="Part">{p.name}</td>
+                  <td className="td font-mono text-xs text-muted" data-label="Current rule">make {p.make} · year {p.year} · engine {p.engine} · fuel {p.fuel}</td>
+                  <td className="td" data-label="Price (£)"><input aria-label={`Price for ${p.name}`} inputMode="decimal" value={prices[p.id]} onChange={(e) => setPrices({ ...prices, [p.id]: e.target.value })} className="input" /></td>
                 </tr>
               ))}
             </tbody>

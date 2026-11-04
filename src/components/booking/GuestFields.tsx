@@ -1,28 +1,20 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
-/** "Basic information" block shown to guests on the booking / quote forms (login or register inline). */
 export function GuestFields() {
-  return (
-    <fieldset className="card space-y-4 p-5">
-      <legend className="px-1 font-display text-lg font-semibold">Basic information</legend>
-      <p className="text-sm text-muted">Please enter your email address. If you already have an account, just enter your password to sign in.</p>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div><label className="label" htmlFor="g-email">Email *</label><input id="g-email" name="email" type="email" required autoComplete="email" className="input" /></div>
-        <div><label className="label" htmlFor="g-password">Password *</label><input id="g-password" name="password" type="password" required autoComplete="current-password" className="input" /></div>
-        <div><label className="label" htmlFor="g-first">First name</label><input id="g-first" name="first_name" autoComplete="given-name" className="input" /></div>
-        <div><label className="label" htmlFor="g-last">Last name</label><input id="g-last" name="last_name" autoComplete="family-name" className="input" /></div>
-        <div className="sm:col-span-2"><label className="label" htmlFor="g-phone">Phone</label><input id="g-phone" name="phone" type="tel" autoComplete="tel" className="input" /><p className="mt-1 text-xs text-muted">Mechanic may need to contact you via telephone to discuss your request.</p></div>
-      </div>
-      <p className="text-xs text-muted">New here? Fill in your name and choose a password (8+ characters) and we&apos;ll create your account. We&apos;ll not pass your details onto any 3rd parties without your permission. <Link href="/password/reset" className="text-brand underline">Forgot password?</Link></p>
-    </fieldset>
-  );
+  const [existing,setExisting]=useState(false);
+  return <fieldset className="booking-form-section"><legend>Your contact details</legend><p className="booking-field-description">We&apos;ll use these details to keep you updated about your booking.</p>
+    <div className="booking-account-switch" aria-label="Account type"><button type="button" aria-pressed={!existing} onClick={()=>setExisting(false)}>I&apos;m a new customer</button><button type="button" aria-pressed={existing} onClick={()=>setExisting(true)}>I have an account</button></div>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {!existing&&<><div><label className="label" htmlFor="g-first">First name *</label><input id="g-first" name="first_name" required autoComplete="given-name" className="input"/></div><div><label className="label" htmlFor="g-last">Last name *</label><input id="g-last" name="last_name" required autoComplete="family-name" className="input"/></div></>}
+      <div><label className="label" htmlFor="g-email">Email address *</label><input id="g-email" name="email" type="email" required autoComplete="email" className="input"/></div>
+      <div><label className="label" htmlFor="g-password">{existing?"Your password":"Create a password"} *</label><input id="g-password" name="password" type="password" required minLength={existing?undefined:8} autoComplete={existing?"current-password":"new-password"} className="input"/>{!existing&&<p className="booking-field-help">Use at least 8 characters for your new account.</p>}</div>
+      {!existing&&<div className="sm:col-span-2"><label className="label" htmlFor="g-phone">Phone number *</label><input id="g-phone" name="phone" type="tel" required autoComplete="tel" className="input"/><p className="booking-field-help">Your mechanic may call to discuss your booking or arrival time.</p></div>}
+    </div>{existing?<Link href="/password/reset" className="booking-text-link">Forgot your password?</Link>:<p className="booking-field-help">We&apos;ll create your account so you can manage bookings and messages.</p>}
+  </fieldset>;
 }
 
 export function TermsBox() {
-  return (
-    <label className="flex items-start gap-3 text-sm">
-      <input type="checkbox" name="terms" required className="mt-1 h-4 w-4 accent-[var(--brand)]" />
-      <span>By ticking this box you are indicating you have read and accept our <Link href="/legal_docs/customer-terms" target="_blank" className="text-brand underline">terms &amp; conditions</Link> and <Link href="/legal_docs/privacy" target="_blank" className="text-brand underline">privacy policy</Link>. *</span>
-    </label>
-  );
+  return <label className="booking-terms"><input type="checkbox" name="terms" required/><span>I agree to the <Link href="/legal_docs/customer-terms" target="_blank" rel="noopener noreferrer">terms &amp; conditions</Link> and <Link href="/legal_docs/privacy" target="_blank" rel="noopener noreferrer">privacy policy</Link>. *</span></label>;
 }

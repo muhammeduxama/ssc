@@ -1,3 +1,4 @@
+import { DataTable } from "@/components/DataTable";
 import Link from "next/link";
 import { Empty, PageHeader } from "@/components/ui";
 import { db } from "@/lib/db";
@@ -17,23 +18,14 @@ export default async function Payments() {
   const total = rows.reduce((a, r) => a + Number(r.platform_fee ?? 0), 0);
   return (
     <>
-      <PageHeader eyebrow={`${rows.length} payments · ${gbp(total)} platform fees`} title="Payment details" />
+      <PageHeader eyebrow={`${rows.length} payments · ${gbp(total)} platform fees`} title="Payments" description="Successful customer payments, mechanic payouts and platform fees." />
       {rows.length === 0 ? <Empty title="No successful payments yet" /> : (
-        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[860px]">
-          <thead><tr><th className="th">#</th><th className="th">Order</th><th className="th">Customer</th><th className="th">Mechanic</th><th className="th text-right">Total</th><th className="th text-right">Mechanic payout</th><th className="th text-right">Platform fee</th><th className="th">Charge date</th></tr></thead>
-          <tbody>{rows.map((p, i) => { const m = p.orders.orderassigns[0]?.users; return (
-            <tr key={String(p.id)}>
-              <td className="td font-mono text-xs text-muted">{i + 1}</td>
-              <td className="td font-mono text-xs"><Link href={`/admin/orders/view/${p.order_id}`} className="font-semibold text-brand hover:underline">#{String(p.order_id)}</Link></td>
-              <td className="td">{p.orders.users.fname} {p.orders.users.lname}</td>
-              <td className="td">{m ? m.company || `${m.fname} ${m.lname}` : "—"}</td>
-              <td className="td text-right font-mono">{gbp(p.total_payment)}</td>
-              <td className="td text-right font-mono">{gbp(p.mechanic_payment)}</td>
-              <td className="td text-right font-mono font-semibold text-brand">{gbp(p.platform_fee)}</td>
-              <td className="td font-mono text-xs text-muted">{dateTime(p.updated_at)}</td>
-            </tr>
-          ); })}</tbody>
-        </table></div></div>
+        <DataTable caption="Successful payments" columns={[
+          {key:"booking",label:"Booking",primary:true},{key:"mechanic",label:"Mechanic"},{key:"total",label:"Customer paid",align:"right"},{key:"payout",label:"Mechanic payout",align:"right"},{key:"fee",label:"Platform fee",align:"right"},{key:"date",label:"Charged"},
+        ]} rows={rows.map((p) => { const m = p.orders.orderassigns[0]?.users; return {id:String(p.id), cells:{
+          booking:<div><Link href={`/admin/orders/view/${p.order_id}`} className="record-title">Booking #{String(p.order_id)}</Link><p className="record-subtitle">{p.orders.users.fname} {p.orders.users.lname}</p></div>,
+          mechanic:m ? m.company || `${m.fname} ${m.lname}` : "Not assigned", total:gbp(p.total_payment), payout:gbp(p.mechanic_payment), fee:<span className="font-semibold text-brand">{gbp(p.platform_fee)}</span>, date:<span className="record-date">{dateTime(p.updated_at)}</span>,
+        }}; })} />
       )}
     </>
   );

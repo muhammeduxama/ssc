@@ -22,3 +22,12 @@ export function slotStart(date: string, time: string): Date | null {
 }
 
 export const TIME_SLOTS = ["8-10 AM", "10-12 AM", "12-02 PM", "02-04 PM", "04-06 PM", "06-08 PM"];
+
+/** Readable labels for legacy stored slots, including the 10am–noon window. */
+export function formatTimeSlot(time: string) {
+  const { start, end } = slotHours(time);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return time;
+  const a = start >= 12 ? "pm" : "am";
+  const b = end >= 12 ? "pm" : "am";
+  return a === b ? `${start % 12 || 12}–${end % 12 || 12} ${b}` : `${start % 12 || 12} ${a}–${end % 12 || 12} ${b}`;
+}

@@ -1,6 +1,7 @@
 import { FileText, MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionTabs } from "@/components/SectionTabs";
 import { Empty, PageHeader, StatusBadge } from "@/components/ui";
 import { requireCustomer } from "@/lib/customer";
 import { carOf, loadCardOrders } from "@/lib/portal";
@@ -15,17 +16,15 @@ export default async function PortalQuotes({ searchParams }: { searchParams: Pro
   const tabs: [string, string, boolean][] = [["/portal/quotes", "Open", !closed], ["/portal/quotes?closed=1", "Closed", closed], ["/portal/quotes/expired", "Expired & follow-on", false]];
   return (
     <>
-      <PageHeader eyebrow={`${rows.length} quotes`} title={closed ? "Closed quotes" : "All quotes"} />
-      <nav className="mb-5 flex gap-1 rounded-lg border border-line bg-raised p-1 sm:w-fit">
-        {tabs.map(([href, label, on]) => <Link key={href} href={href} aria-current={on ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-sm font-medium ${on ? "bg-brand text-on-brand" : "text-muted hover:bg-sunken"}`}>{label}</Link>)}
-      </nav>
+      <PageHeader eyebrow={`${rows.length} quotes`} title={closed ? "Closed quotes" : "My repair quotes"} description="Compare received estimates and keep your repair requests moving." />
+      <SectionTabs label="Quote view" items={tabs.map(([href,label,active])=>({href,label,active}))} />
       {!rows.length && <Empty title="You don't have any quote to show" body="Ask for a repair quote from the home page." />}
       <div className="grid gap-4 md:grid-cols-2">
         {rows.map((o) => {
           const car = carOf(o.car_data);
           return (
             <article key={String(o.id)} className="card flex flex-col p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono text-sm font-semibold">QUOTE #{String(o.id)}</span>
                 <StatusBadge status={o.status === "rejected" ? "closed" : o.status} />
               </div>

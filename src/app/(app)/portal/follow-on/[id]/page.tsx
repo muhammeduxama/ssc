@@ -1,8 +1,8 @@
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { acceptFollowOn, rejectFollowOn } from "@/app/actions/portal";
 import { ActionButton } from "@/components/portal/ActionForm";
-import { PageHeader } from "@/components/ui";
 import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
@@ -24,15 +24,15 @@ export default async function FollowOn({ params }: { params: Promise<{ id: strin
   const parts = q.orderquoteparts.reduce((t, p) => t + Number(p.part_price), 0);
   const open = q.status !== "Quotation Accepted";
   return (
-    <>
-      <PageHeader eyebrow={`Order #${o.id}`} title="Quotation details">
+    <DetailPage>
+      <DetailHeader back={{ href: "/portal/quotes", label: "All quotes" }} eyebrow={`Order #${o.id}`} title="Quotation details">
         {open && (
           <div className="flex gap-2">
             <ActionButton action={acceptFollowOn.bind(null, Number(q.id))} confirmText="Accept this quote?" className="btn btn-primary">Accept quote</ActionButton>
             <ActionButton action={rejectFollowOn.bind(null, Number(q.id))} confirmText="Reject this quote?" className="btn btn-secondary">Reject quote</ActionButton>
           </div>
         )}
-      </PageHeader>
+      </DetailHeader>
       <div className="card max-w-3xl p-6">
         <div className="flex flex-wrap justify-between gap-3 text-sm">
           <div><span className="font-mono font-bold uppercase">{car.reg}</span> · {car.line}<br /><span className="text-muted">{[me.house_no, me.street].filter(Boolean).join(", ")} · {o.postcodes.cities.name} · {o.postcodes.postcode}</span></div>
@@ -46,6 +46,6 @@ export default async function FollowOn({ params }: { params: Promise<{ id: strin
         <div className="mt-1 text-right text-sm text-muted">Total parts price {gbp(parts)}</div>
         <div className="mt-6 flex justify-between border-t border-line pt-4 font-display text-xl font-semibold"><span>Total</span><span>{gbp(q.price)}</span></div>
       </div>
-    </>
+    </DetailPage>
   );
 }

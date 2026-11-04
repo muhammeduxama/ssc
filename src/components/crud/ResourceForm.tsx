@@ -15,6 +15,7 @@ export function ResourceForm({
   isEdit,
   hidden,
   submitLabel,
+  imagePreviews,
 }: {
   fields: ClientField[];
   values: Values;
@@ -22,12 +23,13 @@ export function ResourceForm({
   isEdit: boolean;
   hidden?: Record<string, string>;
   submitLabel: string;
+  imagePreviews?: Record<string, React.ReactNode>;
 }) {
   const [state, run, pending] = useActionState(action, {});
   const err = (n: string) => state.errors?.[n];
 
   return (
-    <form action={run} className="card p-6" encType="multipart/form-data">
+    <form action={run} className="card resource-form" encType="multipart/form-data">
       {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       {state.message && (
         <p role="alert" className="mb-5 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm">
@@ -85,10 +87,10 @@ export function ResourceForm({
                     case "file":
                       return (
                         <div className="flex items-center gap-4">
-                          {v && f.type === "image" && (
+                          {f.type === "image" && (imagePreviews?.[f.name] ?? (v ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={asset(String(v))} alt="" className="h-16 w-16 rounded-lg border border-line object-cover" />
-                          )}
+                          ) : null))}
                           <input id={id} type="file" name={f.name} accept={f.type === "image" ? "image/*" : undefined} className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand" />
                         </div>
                       );
@@ -110,7 +112,7 @@ export function ResourceForm({
             );
           })}
       </div>
-      <div className="mt-6 flex justify-end gap-3 border-t border-line pt-5">
+      <div className="resource-form-footer">
         <button disabled={pending} className="btn btn-primary">
           {pending ? "Saving…" : submitLabel}
         </button>

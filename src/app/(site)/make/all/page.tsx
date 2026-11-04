@@ -15,5 +15,5 @@ export default async function AllMakes() {
     const letter = make.name[0].toUpperCase();
     groups.set(letter, [...(groups.get(letter) ?? []), { name: make.name, href: `/makes/${make.slug}` }]);
   }
-  return <><PageHero eyebrow="Made for your make" title="Every car has its own needs.">Find servicing and repair information for your manufacturer. Choose your make below or search by name.</PageHero><BrowseDirectory label="Find your car make" placeholder="Search Ford, BMW, Toyota…" groups={Array.from(groups, ([name, items]) => ({ name, items }))} /></>;
+  return <><PageHero eyebrow="Made for your make" title="Every car has its own needs.">Find servicing and repair information for your manufacturer. Choose your make below or search by name.</PageHero><BrowseDirectory carLogos label="Find your car make" placeholder="Search Ford, BMW, Toyota…" groups={Array.from(groups, ([name, items]) => ({ name, items }))} /></>;
 }

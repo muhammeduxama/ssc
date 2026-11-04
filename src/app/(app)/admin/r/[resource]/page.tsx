@@ -1,3 +1,5 @@
+import { DataTable, type DataColumn } from "@/components/DataTable";
+import { CarBrandLogo } from "@/components/CarBrandLogo";
 import { Plus, Search } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -38,14 +40,13 @@ export default async function ListPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <PageHeader eyebrow={`${r.group} · ${count} records`} title={r.title}>
+      <PageHeader eyebrow={`${r.group} · ${count} records`} title={r.title} description={r.description}>
         {r.canCreate !== false && (
           <Link href={`/admin/r/${r.slug}/new${scope ? `?${scope}` : ""}`} className="btn btn-primary">
             <Plus size={16} /> Add {r.singular}
           </Link>
         )}
       </PageHeader>
-      {r.description && <p className="-mt-4 mb-6 max-w-2xl text-sm text-muted">{r.description}</p>}
       {sp.error === "in-use" && (
         <p className="mb-4 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm">That record is still used elsewhere, so it can’t be deleted.</p>
       )}
@@ -65,59 +66,20 @@ export default async function ListPage({ params, searchParams }: Props) {
       {rows.length === 0 ? (
         <Empty title={`No ${r.title.toLowerCase()} yet`} />
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
-              <thead>
-                <tr>
-                  <th className="th w-16">ID</th>
-                  {cols.map((c) => <th key={c.name} className="th">{c.label}</th>)}
-                  <th className="th text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={String(row.id)} className="transition hover:bg-brand-soft/40">
-                    <td className="td font-mono text-xs text-muted">{row.id}</td>
-                    {cols.map((c) => {
-                      const v = row[c.name];
-                      return (
-                        <td key={c.name} className="td max-w-xs">
-                          {c.type === "image" ? (
-                            v ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={asset(String(v))} alt="" className="h-10 w-10 rounded-md border border-line object-cover" />
-                            ) : (
-                              <span className="text-muted">—</span>
-                            )
-                          ) : c.type === "boolean" ? (
-                            <span className={`pill border-transparent ${v ? "bg-ok-soft text-ok" : "bg-sunken text-muted"}`}>{v ? "Yes" : "No"}</span>
-                          ) : c.type === "select" ? (
-                            <span>{c.options?.find((o) => o.value === String(v ?? ""))?.label ?? String(v ?? "—")}</span>
-                          ) : (
-                            <span className="line-clamp-2">{v === null || v === "" ? "—" : String(v)}</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="td">
-                      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
-                        {r.rowLinks?.map((l) => (
-                          <Link key={l.label} href={l.href.replace("{id}", String(row.id))} className="rounded-md px-2 py-1 text-xs font-semibold text-muted hover:bg-sunken hover:text-ink">
-                            {l.label}
-                          </Link>
-                        ))}
-                        <Link href={`/admin/r/${r.slug}/${row.id}?back=${encodeURIComponent(self)}`} className="rounded-md px-2 py-1 text-xs font-semibold text-brand hover:bg-brand-soft">
-                          Edit
-                        </Link>
-                        {r.canDelete !== false && <DeleteButton what={r.singular} action={deleteAction.bind(null, r.slug, String(row.id), self)} />}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="resource-list">
+          <DataTable caption={r.title} columns={[
+            {key:"id",label:"ID"}, ...cols.map((c,i) => ({key:c.name,label:c.label,primary:r.slug==="makes" ? c.name==="name" : i===0})),
+          ] satisfies DataColumn[]} rows={rows.map((row) => ({id:String(row.id),cells:{
+            id:<span className="record-subtitle">#{String(row.id)}</span>,
+            ...Object.fromEntries(cols.map((c) => {
+              const v=row[c.name];
+              if (r.slug === "makes" && c.name === "icon") {
+                return [c.name, <CarBrandLogo key={String(row.id)} make={String(row.name ?? "")} fallbackSrc={v ? asset(String(v)) : undefined} className="car-brand-logo-compact"/>];
+              }
+              const cell=c.type==="image" ? (v ? <img /* eslint-disable-line @next/next/no-img-element */ src={asset(String(v))} alt={c.label} className="h-12 w-12 rounded-lg border border-line object-cover"/> : "No image") : c.type==="boolean" ? <span className={`pill border-transparent ${v ? "bg-ok-soft text-ok" : "bg-sunken text-muted"}`}>{v?"Yes":"No"}</span> : c.type==="select" ? c.options?.find((o)=>o.value===String(v??""))?.label??String(v??"—") : <span className="line-clamp-3 [overflow-wrap:anywhere]">{v===null||v===""?"—":String(v)}</span>;
+              return [c.name,cell];
+            })),
+          },actions:<>{r.rowLinks?.map((l)=><Link key={l.label} href={l.href.replace("{id}",String(row.id))} className="record-action">{l.label}</Link>)}<Link href={`/admin/r/${r.slug}/${row.id}?back=${encodeURIComponent(self)}`} className="record-action">Edit</Link>{r.canDelete!==false&&<DeleteButton what={r.singular} action={deleteAction.bind(null,r.slug,String(row.id),self)}/>}</>}))}/>
           {pages > 1 && (
             <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm">
               <span className="font-mono text-xs text-muted">Page {page} of {pages}</span>

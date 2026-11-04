@@ -1,8 +1,8 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { VehicleMark } from "@/components/VehicleMark";
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
 import { notFound } from "next/navigation";
 import { RequestActions } from "@/components/mechanic/RequestActions";
-import { Field, PageHeader } from "@/components/ui";
+import { Field } from "@/components/ui";
 import { asset } from "@/lib/asset";
 import { gbp } from "@/lib/format";
 import { requireRole } from "@/lib/guard";
@@ -22,9 +22,8 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   const blocked = !r.docsUploaded ? "Please upload your required documents before you accept any job." : !r.docsApproved ? "Documents are waiting for approval! Please wait for your documents to be approved." : undefined;
 
   return (
-    <>
-      <Link href="/mechanic/requests" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"><ArrowLeft size={16} /> Job requests</Link>
-      <PageHeader eyebrow={`Booking #${r.order.id} · ${r.order.service}`} title={r.carTitle} />
+    <DetailPage>
+      <DetailHeader back={{ href: "/mechanic/requests", label: "Job requests" }} eyebrow={`Booking #${r.order.id} · ${r.order.service}`} title={r.carTitle} />
       {closed ? (
         <div className="card p-8 text-center"><h2 className="font-display text-xl font-semibold">{closed}</h2></div>
       ) : (
@@ -46,10 +45,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
             <section className="card p-6">
               <h2 className="mb-4 font-display text-lg font-semibold">Vehicle &amp; location</h2>
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                {r.car.logo && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={asset(r.car.logo)} alt="" className="h-9 w-11 object-contain" />
-                )}
+                <VehicleMark make={r.car.make} src={asset(r.car.logo)}/>
                 {[r.car.model, r.car.engine, r.car.year, r.car.fuel].filter(Boolean).map((x) => <span key={String(x)} className="pill border-line">{x}</span>)}
                 <span className="ml-auto rounded-md border-2 border-black bg-[#f7ce35] px-3 py-1 font-mono font-bold tracking-widest text-black">{String(r.car.reg ?? "").toUpperCase()}</span>
               </div>
@@ -76,6 +72,6 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       )}
-    </>
+    </DetailPage>
   );
 }

@@ -1,8 +1,8 @@
+import { DetailPage, DetailHeader } from "@/components/DetailPage";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AskQuestion } from "@/components/portal/AskQuestion";
-import { PageHeader } from "@/components/ui";
 import { requireCustomer } from "@/lib/customer";
 import { db } from "@/lib/db";
 import { gbp } from "@/lib/format";
@@ -22,8 +22,8 @@ export default async function RequestDetails({ params }: { params: Promise<{ id:
   const car = carOf(r.orders.car_data);
   const q = r.orderrequestquotes[0];
   return (
-    <>
-      <PageHeader eyebrow={`${car.title} · ${car.reg ?? ""}`} title={r.orders.ordertracks[0]?.services.name ?? "Repair quote"} />
+    <DetailPage>
+      <DetailHeader back={{ href: "/portal/quotes", label: "All quotes" }} eyebrow={`${car.title} · ${car.reg ?? ""}`} title={r.orders.ordertracks[0]?.services.name ?? "Repair quote"} />
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <section className="card p-6">
           <div className="flex items-center gap-4">
@@ -44,6 +44,6 @@ export default async function RequestDetails({ params }: { params: Promise<{ id:
         </section>
         <section className="card p-6"><AskQuestion requestId={Number(r.id)} /></section>
       </div>
-    </>
+    </DetailPage>
   );
 }

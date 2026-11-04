@@ -24,7 +24,7 @@ export function ClientActions({ id }: { id: number }) {
   const [pw, setPw] = useState(false);
   return (
     <div className="flex items-center justify-end gap-0.5">
-      <Link href={`/admin/clients/${id}`} aria-label="Edit client" title="Edit" className="rounded-md p-1.5 text-brand hover:bg-brand-soft"><Pencil size={16} /></Link>
+      <Link href={`/admin/clients/${id}`} aria-label="Edit client" title="Edit" className="record-action"><Pencil size={14} /> View & edit</Link>
       <button onClick={() => setPw(true)} aria-label="Change password" title="Change password" className="rounded-md p-1.5 text-muted hover:bg-sunken"><KeyRound size={16} /></button>
       <form action={loginAsUser.bind(null, id)}><button aria-label="Log in as this client" title="Log in as client" className="rounded-md p-1.5 text-muted hover:bg-sunken"><LogIn size={16} /></button></form>
       {pw && <PasswordDialog onClose={() => setPw(false)} save={(password, confirmation) => setClientPassword(id, password, confirmation)} />}

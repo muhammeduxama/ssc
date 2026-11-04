@@ -1,3 +1,4 @@
+import { CarBrandLogo } from "@/components/CarBrandLogo";
 import { ArrowRight, Star, Wrench } from "lucide-react";
 import Link from "next/link";
 
@@ -10,7 +11,7 @@ export function SectionTitle({ eyebrow, title }: { eyebrow?: string; title: stri
   );
 }
 
-export function ChipGrid({ eyebrow, title, items, more, tone }: { eyebrow: string; title: string; items: { href: string; label: string }[]; more?: string; tone?: "sunken" }) {
+export function ChipGrid({ eyebrow, title, items, more, tone, carLogos = false }: { eyebrow: string; title: string; items: { href: string; label: string }[]; more?: string; tone?: "sunken"; carLogos?: boolean }) {
   if (!items.length) return null;
   return (
     <section className={tone === "sunken" ? "bg-sunken" : ""}>
@@ -23,7 +24,7 @@ export function ChipGrid({ eyebrow, title, items, more, tone }: { eyebrow: strin
           {items.map((i) => (
             <li key={i.href}>
               <Link href={i.href} className="browse-card group">
-                <span>{i.label}</span> <ArrowRight size={17} className="shrink-0 text-brand transition-transform group-hover:translate-x-1" />
+                <span className="flex min-w-0 items-center gap-3">{carLogos && <CarBrandLogo make={i.label} className="car-brand-logo-compact"/>}<span>{i.label}</span></span> <ArrowRight size={17} className="shrink-0 text-brand transition-transform group-hover:translate-x-1" />
               </Link>
             </li>
           ))}
@@ -92,13 +93,14 @@ export function SchemaCode({ code }: { code: string | null | undefined }) {
 }
 
 /** The "Book … By Mobile Mechanics & Garages" banner with the quote form, used across the public pages. */
-export async function QuoteHero({ what = "Car", secondary = false }: { what?: string | null; secondary?: boolean }) {
+export async function QuoteHero({ what = "Car", secondary = false, make }: { what?: string | null; secondary?: boolean; make?: string }) {
   const Heading = secondary ? "h2" : "h1";
   const { QuoteForm } = await import("./QuoteForm");
   return (
     <section id="quote" className="page-hero scroll-mt-24">
       <div className="site-container grid items-center gap-10 py-12 lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-16">
         <div>
+          {make && <CarBrandLogo make={make} className="mb-5"/>}
           <span className="eyebrow">Local expertise. Simple booking.</span>
           <Heading className="mt-5 max-w-xl font-display text-4xl font-semibold leading-[1.1] tracking-[-.04em] sm:text-5xl">{what || "Car"} care, made simple.</Heading>
           <p className="mt-5 max-w-md text-lg leading-8 text-muted">Find a mobile mechanic or local garage. Start with your vehicle and we’ll help you find the right service.</p>

@@ -1,11 +1,12 @@
-import { ArrowLeft } from "lucide-react";
+import { SectionTabs } from "@/components/SectionTabs";
+import { DetailPage, DetailHeader, DetailMetrics } from "@/components/DetailPage";
+import { CalendarClock, MapPin, Send, Wrench } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import MechanicsMap from "@/components/admin/MapLoader";
 import { QuoteBuilder, QuoteChat, QuoteRequestForm } from "@/components/admin/QuoteTools";
 import { CloseQuoteButton } from "@/components/admin/CloseQuote";
-import { Field, PageHeader, StatusBadge } from "@/components/ui";
+import { Field, StatusBadge } from "@/components/ui";
 import { getQuote } from "@/lib/admin/quotes";
 import { db } from "@/lib/db";
 import { dateTime, gbp } from "@/lib/format";
@@ -22,7 +23,8 @@ export default async function QuotePage({ params, searchParams }: Props) {
   if (!/^\d+$/.test(id)) notFound();
   const [q, setting] = await Promise.all([getQuote(Number(id)), db.settings.findFirst({ orderBy: { id: "desc" }, select: { labour_rate: true } })]);
   if (!q) notFound();
-  const { tab = "details" } = await searchParams;
+  const requestedTab = (await searchParams).tab;
+  const tab = ["details", "build", "mechanics", "chat"].includes(requestedTab ?? "") ? requestedTab! : "details";
   const responded = q.requests.filter((r) => r.quote?.status === "QUOTATION SENT");
   const viewed = q.requests.filter((r) => r.quote);
   const tabs = [
@@ -33,19 +35,20 @@ export default async function QuotePage({ params, searchParams }: Props) {
   ];
 
   return (
-    <>
-      <Link href="/admin/quotes/all" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"><ArrowLeft size={16} /> All quotes</Link>
-      <PageHeader eyebrow={`Repair quote #${q.id}`} title={q.carTitle}>
+    <DetailPage>
+      <DetailHeader back={{ href: "/admin/quotes/all", label: "All quotes" }} eyebrow={`Repair quote #${q.id}`} title={q.carTitle}>
         <div className="flex items-center gap-3">
           <StatusBadge status={q.status} />
           {q.status !== "rejected" && <CloseQuoteButton id={q.id} />}
         </div>
-      </PageHeader>
-      <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-line" aria-label="Quote sections">
-        {tabs.map((t) => (
-          <Link key={t.id} href={`?tab=${t.id}`} aria-current={tab === t.id ? "page" : undefined} className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold ${tab === t.id ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"}`}>{t.label}</Link>
-        ))}
-      </nav>
+      </DetailHeader>
+      <DetailMetrics items={[
+        { label: "Location", value: q.postcode || q.city, icon: MapPin, hint: q.city },
+        { label: "Mechanics notified", value: String(q.requests.length), icon: Wrench },
+        { label: "Quotes received", value: String(responded.length), icon: Send },
+        { label: "Requested", value: dateTime(q.created), icon: CalendarClock },
+      ]}/>
+      <SectionTabs label="Record sections" items={tabs.map((t) => ({ href: `?tab=${t.id}`, label: t.label, active: tab === t.id }))}/>
 
       {tab === "details" && (
         <div className="grid gap-4 xl:grid-cols-2">
@@ -96,19 +99,19 @@ export default async function QuotePage({ params, searchParams }: Props) {
             </div>
             {q.requests.length === 0 ? <p className="text-muted">No mechanics notified.</p> : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px]">
+                <table className="w-full min-w-[760px] section-responsive-table">
                   <thead><tr><th className="th">Mechanic</th><th className="th">Distance</th><th className="th">Request</th><th className="th">Quote status</th><th className="th">Labour</th><th className="th">Parts</th><th className="th text-right">Total</th><th className="th">Response date</th></tr></thead>
                   <tbody>
                     {q.requests.map((r) => (
                       <tr key={r.id}>
-                        <td className="td"><div className="font-medium">{r.mechanic}</div><span className={`pill mt-1 border-transparent ${r.active ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>{r.active ? "Active" : "Blocked"}</span></td>
-                        <td className="td font-mono text-xs">{r.miles} miles</td>
-                        <td className="td"><StatusBadge status={r.status} /></td>
-                        <td className="td text-xs">{r.quote ? (r.quote.status === "QUOTATION SENT" ? <span className="pill border-transparent bg-ok-soft text-ok">Quotation sent</span> : <span className="pill border-transparent bg-sunken text-muted">{r.quote.status || "Viewed"}</span>) : <span className="text-muted">Not viewed</span>}</td>
-                        <td className="td text-xs">{r.quote?.labours.map((l) => `${l.name} (${gbp(l.price)})`).join(", ") || "—"}</td>
-                        <td className="td text-xs">{r.quote?.parts.map((p) => `${p.name} (${gbp(p.price)})`).join(", ") || "—"}</td>
-                        <td className="td text-right font-mono">{r.quote ? gbp(r.quote.price) : "—"}</td>
-                        <td className="td font-mono text-xs text-muted">{r.quote ? dateTime(r.quote.at) : "—"}</td>
+                        <td className="td" data-label="Mechanic"><div className="font-medium">{r.mechanic}</div><span className={`pill mt-1 border-transparent ${r.active ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>{r.active ? "Active" : "Blocked"}</span></td>
+                        <td className="td font-mono text-xs" data-label="Distance">{r.miles} miles</td>
+                        <td className="td" data-label="Request"><StatusBadge status={r.status} /></td>
+                        <td className="td text-xs" data-label="Quote status">{r.quote ? (r.quote.status === "QUOTATION SENT" ? <span className="pill border-transparent bg-ok-soft text-ok">Quotation sent</span> : <span className="pill border-transparent bg-sunken text-muted">{r.quote.status || "Viewed"}</span>) : <span className="text-muted">Not viewed</span>}</td>
+                        <td className="td text-xs" data-label="Labour">{r.quote?.labours.map((l) => `${l.name} (${gbp(l.price)})`).join(", ") || "—"}</td>
+                        <td className="td text-xs" data-label="Parts">{r.quote?.parts.map((p) => `${p.name} (${gbp(p.price)})`).join(", ") || "—"}</td>
+                        <td className="td text-right font-mono" data-label="Total">{r.quote ? gbp(r.quote.price) : "—"}</td>
+                        <td className="td font-mono text-xs text-muted" data-label="Response date">{r.quote ? dateTime(r.quote.at) : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -146,6 +149,6 @@ export default async function QuotePage({ params, searchParams }: Props) {
           <QuoteChat orderId={q.id} customer={q.customer.name} messages={q.chat} />
         </div>
       )}
-    </>
+    </DetailPage>
   );
 }

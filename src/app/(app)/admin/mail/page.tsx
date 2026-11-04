@@ -18,7 +18,7 @@ export default async function Sent({ searchParams }: { searchParams: Promise<{ p
   const pages = Math.max(1, Math.ceil(count / 15));
   return (
     <>
-      <PageHeader eyebrow={`Mailbox · ${count}`} title="Sent">
+      <PageHeader eyebrow={`Mailbox · ${count}`} title="Sent emails" description="Review your sent messages or compose a new email.">
         <div className="flex gap-2">
           <Link href="/admin/mail/join-network" className="btn btn-secondary">Join network invite</Link>
           <Link href="/admin/mail/compose" className="btn btn-primary"><PenLine size={16} /> Compose</Link>

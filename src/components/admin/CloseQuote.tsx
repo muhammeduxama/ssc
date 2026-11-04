@@ -6,7 +6,7 @@ import { cancelOrder } from "@/app/(app)/admin/orders/actions";
 import { useToast } from "@/components/Toast";
 
 /** The Laravel "close status" button posts to /ssc/order/reject-order (customer gets the cancellation email). */
-export function CloseQuoteButton({ id }: { id: number }) {
+export function CloseQuoteButton({ id, compact = false }: { id: number; compact?: boolean }) {
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
@@ -21,9 +21,9 @@ export function CloseQuoteButton({ id }: { id: number }) {
           router.refresh();
         });
       }}
-      aria-label="Close quote"
+      aria-label={`Close quote #${id}`}
       title="Close quote"
-      className="rounded-md p-1.5 text-danger hover:bg-danger-soft"
+      className={compact ? "record-action quote-icon-action quote-close-action" : "rounded-md p-1.5 text-danger hover:bg-danger-soft"}
     >
       <XSquare size={16} />
     </button>

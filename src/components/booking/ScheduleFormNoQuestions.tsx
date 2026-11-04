@@ -26,10 +26,10 @@ export function ScheduleFormNoQuestions({ action, children }: { action: (f: Form
           if (!r.ok) setError(r.message);
         });
       }}
-      className="space-y-6"
+      className="booking-details-form"
     >
       {children}
-      <fieldset className="card p-5">
+      <fieldset className="booking-form-section">
         <legend className="px-1 font-display text-lg font-semibold">When are you available?</legend>
         <p className="mb-4 text-sm text-muted">Please select ALL of the times when you are available. Your mechanic will confirm a 2-hour arrival window.</p>
         <SlotPicker value={slots} onChange={setSlots} />

@@ -25,7 +25,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
   const earned = jobs.reduce((t, j) => t + Number(j.orders.orderpayments[0]?.mechanic_payment ?? 0), 0);
   return (
     <>
-      <PageHeader eyebrow="Earnings" title="Payments" />
+      <PageHeader eyebrow="Earnings" title="Payments" description="Manage your Stripe connection and review payments for completed jobs." />
       {sp.stripe === "error" && <p className="mb-4 rounded-lg border border-danger bg-danger-soft px-4 py-3 text-sm">Stripe didn’t finish connecting. Please try again.</p>}
       <div className="mb-6 grid gap-4 md:grid-cols-2">
         <section className="card p-6">
@@ -46,16 +46,16 @@ export default async function Payments({ searchParams }: { searchParams: Promise
         </section>
       </div>
       {jobs.length === 0 ? <Empty title="No completed jobs yet" /> : (
-        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[720px]">
+        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[720px] section-responsive-table">
           <thead><tr><th className="th">Booking</th><th className="th">Vehicle</th><th className="th text-right">Charged</th><th className="th text-right">Fee</th><th className="th text-right">You received</th><th className="th">Completed</th></tr></thead>
           <tbody>{jobs.map((j) => { const p = j.orders.orderpayments[0]; const c = parseCar(j.orders.car_data); return (
             <tr key={String(j.id)}>
-              <td className="td font-mono text-xs"><Link href={`/mechanic/jobs/${j.id}`} className="font-semibold text-brand hover:underline">#{String(j.order_id)}</Link></td>
-              <td className="td">{carTitle(c)} <span className="font-mono text-xs text-muted">{c.reg}</span></td>
-              <td className="td text-right font-mono">{gbp(p?.total_payment ?? j.price)}</td>
-              <td className="td text-right font-mono text-muted">{gbp(p?.platform_fee ?? 0)}</td>
-              <td className="td text-right font-mono font-semibold text-brand">{gbp(p?.mechanic_payment ?? 0)}</td>
-              <td className="td font-mono text-xs text-muted">{dateTime(j.updated_at)}</td>
+              <td className="td font-mono text-xs" data-label="Booking"><Link href={`/mechanic/jobs/${j.id}`} className="font-semibold text-brand hover:underline">#{String(j.order_id)}</Link></td>
+              <td className="td" data-label="Vehicle">{carTitle(c)} <span className="font-mono text-xs text-muted">{c.reg}</span></td>
+              <td className="td text-right font-mono" data-label="Charged">{gbp(p?.total_payment ?? j.price)}</td>
+              <td className="td text-right font-mono text-muted" data-label="Fee">{gbp(p?.platform_fee ?? 0)}</td>
+              <td className="td text-right font-mono font-semibold text-brand" data-label="You received">{gbp(p?.mechanic_payment ?? 0)}</td>
+              <td className="td font-mono text-xs text-muted" data-label="Completed">{dateTime(j.updated_at)}</td>
             </tr>
           ); })}</tbody>
         </table></div></div>

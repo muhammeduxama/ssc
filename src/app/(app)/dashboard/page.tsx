@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const s = await getSession();
   if (!s) redirect("/login");
-  if (isStaff(s)) return <AdminDashboard name={s.name} />;
+  if (isStaff(s)) return <AdminDashboard name={s.name} isAdmin={s.role === "admin"} />;
   if (s.role === "mechanic") return <MechanicDashboard id={s.id} name={s.name} />;
   if (s.role === "customer") return <CustomerDashboard id={s.id} name={s.name} />;
   const d = await getDashboard(s);
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
             <Link href="/orders" className="text-sm font-semibold text-brand hover:underline">See all →</Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px]">
+            <table className="w-full min-w-[560px] section-responsive-table">
               <thead>
                 <tr>
                   <th className="th">Order</th>
@@ -90,17 +90,17 @@ export default async function DashboardPage() {
               <tbody>
                 {d.recent.map((o) => (
                   <tr key={o.id} className="transition hover:bg-brand-soft/50">
-                    <td className="td font-mono text-xs">
+                    <td className="td font-mono text-xs" data-label="Order">
                       <Link href={`/orders/${o.id}`} className="font-medium text-brand hover:underline">#{o.id}</Link>
                       <div className="text-muted">{shortDate(o.at)}</div>
                     </td>
-                    <td className="td">
+                    <td className="td" data-label="Vehicle">
                       <div className="font-medium">{o.car}</div>
                       <div className="font-mono text-xs text-muted">{o.reg}</div>
                     </td>
-                    <td className="td capitalize">{o.service}</td>
-                    <td className="td"><StatusBadge status={o.status} /></td>
-                    <td className="td text-right font-mono">{gbp(o.price)}</td>
+                    <td className="td capitalize" data-label="Service">{o.service}</td>
+                    <td className="td" data-label="Status"><StatusBadge status={o.status} /></td>
+                    <td className="td text-right font-mono" data-label="Price">{gbp(o.price)}</td>
                   </tr>
                 ))}
               </tbody>

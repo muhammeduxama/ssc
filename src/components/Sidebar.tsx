@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown, Activity, BellRing, BookOpen, Building2, CalendarPlus, CarFront, Circle, Clock, ClipboardList, CreditCard, FileCheck, FilePlus, FileText, HelpCircle, Image, Inbox, KeyRound, Layers, LayoutDashboard, Mail, Map, MapPin, MessageSquare, Palette, PenLine, PoundSterling, Receipt, Send, Settings, Star, Tags, Upload, UserCog, UserPlus, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
+import { Search, ChevronDown, Activity, BellRing, BookOpen, Building2, CalendarPlus, CarFront, Circle, Clock, ClipboardList, CreditCard, FileCheck, FilePlus, FileText, HelpCircle, Image, Inbox, KeyRound, Layers, LayoutDashboard, Mail, Map, MapPin, MessageSquare, Palette, PenLine, PoundSterling, Receipt, Send, Settings, Star, Tags, Upload, UserCog, UserPlus, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
@@ -11,21 +11,34 @@ const icon = (n: string) => ICONS[n] ?? Circle;
 type Props = { nav: NavGroup[]; unread: number; onNavigate?: () => void; mini?: boolean };
 
 export function Sidebar({ nav, unread, onNavigate, mini = false }: Props) {
+  const [search, setSearch] = useState("");
   const path = usePathname();
   const sp = useSearchParams();
   const here = `${path}${sp.toString() ? `?${sp}` : ""}`;
-  const isOn = (href: string) => (href.includes("?") ? here === href : path === href || (href !== "/dashboard" && path.startsWith(href + "/")));
+  const queryMatch = nav.flatMap((g) => g.items).some((i) => i.href.includes("?") && here === i.href);
+  const isOn = (href: string) => {
+    if (href.includes("?")) return here === href;
+    if (path === href) return !queryMatch;
+    return href !== "/dashboard" && path.startsWith(href + "/");
+  };
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(nav.map((g) => [g.group, !g.collapsible || g.items.some((i) => isOn(i.href))])),
   );
+  const query = search.trim().toLowerCase();
+  const visible = nav.map((g) => ({ ...g, items: g.items.filter((i) => !query || `${g.group} ${i.label}`.toLowerCase().includes(query)) })).filter((g) => g.items.length);
   const badgeOf = (i: NavItem) => (i.badge === "unread" ? unread : 0);
 
   if (mini) return <MiniNav nav={nav} isOn={isOn} badgeOf={badgeOf} />;
 
   return (
     <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 [scrollbar-width:thin]" aria-label="Main">
-      {nav.map((g) => {
-        const expanded = open[g.group] ?? true;
+      <div className="relative">
+        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+        <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a page…" aria-label="Search navigation" className="input pl-9" />
+      </div>
+      {!visible.length && <p className="px-3 text-sm text-muted">No matching pages.</p>}
+      {visible.map((g) => {
+        const expanded = !!query || (open[g.group] ?? true);
         return (
           <div key={g.group}>
             <button
@@ -78,7 +91,7 @@ export function Sidebar({ nav, unread, onNavigate, mini = false }: Props) {
 function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) => boolean; badgeOf: (i: NavItem) => number }) {
   const [fly, setFly] = useState<{ group: string; top?: number; bottom?: number; left: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const keep = () => timer.current && clearTimeout(timer.current);
+  const keep = () => { if (timer.current) clearTimeout(timer.current); };
   const close = () => {
     keep();
     timer.current = setTimeout(() => setFly(null), 150);
@@ -96,26 +109,22 @@ function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) =>
 
   return (
     <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4 [scrollbar-width:none]" aria-label="Main" onScroll={() => setFly(null)}>
-      {nav.map((g, gi) => (
-        <div key={g.group} className={`flex flex-col items-center gap-1 ${gi ? "mt-1 border-t border-night-line pt-2" : ""}`}>
+      {nav.map((g, gi) => {
+        const GroupIcon = icon(g.icon ?? g.items[0]?.icon ?? "Circle");
+        const groupOn = g.items.some((i) => isOn(i.href));
+        return <div key={g.group} className={`flex flex-col items-center gap-1 ${gi ? "mt-1 border-t border-night-line pt-2" : ""}`}>
           {g.collapsible ? (
-            (() => {
-              const I = icon(g.icon ?? g.items[0]?.icon ?? "Circle");
-              const on = g.items.some((i) => isOn(i.href));
-              return (
                 <button
                   type="button"
                   aria-label={g.group}
                   aria-expanded={fly?.group === g.group}
-                  className={cell(on)}
+                  className={cell(groupOn)}
                   onMouseEnter={(e) => show(g.group, e.currentTarget)}
                   onMouseLeave={close}
                   onClick={(e) => (fly?.group === g.group ? setFly(null) : show(g.group, e.currentTarget))}
                 >
-                  <I size={19} />
+                  <GroupIcon size={19} />
                 </button>
-              );
-            })()
           ) : (
             g.items.map((i) => {
               const I = icon(i.icon);
@@ -129,8 +138,8 @@ function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) =>
               );
             })
           )}
-        </div>
-      ))}
+        </div>;
+      })}
 
       {current && fly && (
         <div

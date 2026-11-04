@@ -15,7 +15,7 @@ export default function MechanicsMap({ center, pins }: { center: { lat: number; 
         <Popup>Order location</Popup>
       </CircleMarker>
       {valid.map((p) => (
-        <CircleMarker key={p.id} center={[p.lat!, p.lng!]} radius={7} pathOptions={{ color: p.active ? "#9c4425" : "#a89d93", fillColor: p.active ? "#d97757" : "#bbbbbb", fillOpacity: 0.9 }}>
+        <CircleMarker key={p.id} center={[p.lat!, p.lng!]} radius={7} pathOptions={{ color: p.active ? "var(--brand-hover)" : "var(--line-strong)", fillColor: p.active ? "var(--brand)" : "var(--line-strong)", fillOpacity: 0.9 }}>
           <Popup>
             <strong>{p.label}</strong>
             <br />

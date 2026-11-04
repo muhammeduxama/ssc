@@ -1,43 +1,47 @@
-import { AlertTriangle, BellRing, CalendarClock, CheckCircle2, FileText, Wrench } from "lucide-react";
+import { ArrowRight, BellRing, CalendarClock, CheckCircle2, ClipboardList, FileCheck, FileText, MapPin, MessageSquare, PoundSterling, Wrench } from "lucide-react";
 import Link from "next/link";
-import { JobList } from "@/components/mechanic/JobList";
-import { Kpi, PageHeader } from "@/components/ui";
+import { DashboardEmpty, DashboardPanel, DashboardRow, DashboardStat } from "@/components/Dashboard";
+import { gbp } from "@/lib/format";
 import { jobRequests, mechanicHome, myJobs, quoteRequests } from "@/lib/mechanic/jobs";
 
 export async function MechanicDashboard({ id, name }: { id: string; name: string }) {
   const [h, current, requests, quotes] = await Promise.all([mechanicHome(id), myJobs(id, "assigned"), jobRequests(id), quoteRequests(id)]);
-  return (
-    <>
-      <PageHeader eyebrow="Mechanic overview" title={`Hello, ${name.split(" ")[0]}`}>
-        <Link href="/mechanic/requests" className="btn btn-primary"><BellRing size={16} /> Job requests ({requests.length})</Link>
-      </PageHeader>
-      {!h.active && <p className="mb-4 flex items-center gap-2 rounded-lg border border-warn bg-warn-soft px-4 py-3 text-sm"><AlertTriangle size={16} /> Your account is waiting for approval by Smart Servicing Centre.</p>}
-      {!h.docsUploaded ? (
-        <p className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-warn bg-warn-soft px-4 py-3 text-sm"><AlertTriangle size={16} /> Upload your required documents before you can accept jobs. <Link href="/mechanic/profile" className="font-semibold underline">Upload now</Link></p>
-      ) : !h.docsApproved ? (
-        <p className="mb-4 flex items-center gap-2 rounded-lg border border-line bg-sunken px-4 py-3 text-sm"><FileText size={16} /> Your documents are waiting for approval.</p>
-      ) : null}
-      {!h.stripeConnected && <p className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-sunken px-4 py-3 text-sm"><AlertTriangle size={16} /> Connect Stripe to get paid for jobs. <Link href="/mechanic/payments" className="font-semibold underline">Connect</Link></p>}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="MOT / service requests" value={h.requests} icon={BellRing} tone="accent" hint="Waiting for you to accept" />
-        <Kpi label="Repair quote requests" value={quotes.length} icon={FileText} hint="Customers asking for a price" />
-        <Kpi label="In progress" value={h.progress} icon={CalendarClock} hint="Assigned jobs" />
-        <Kpi label="Completed" value={h.completed} icon={CheckCircle2} hint="Finished jobs" />
+  const now = new Date().getTime();
+  const upcoming = current.filter((j) => j.startAt && new Date(j.startAt).getTime() >= now).sort((a, b) => a.startAt!.localeCompare(b.startAt!))[0];
+  const setup = [
+    { title: "Account approval", complete: !!h.active, description: h.active ? "Your account is approved" : "Our team is reviewing your application", href: "/mechanic/profile" },
+    { title: "Required documents", complete: h.docsApproved, description: h.docsApproved ? "Documents approved" : h.docsUploaded ? "Your documents are being reviewed" : "Upload the required documents", href: "/mechanic/documents" },
+    { title: "Payment account", complete: h.stripeConnected, description: h.stripeConnected ? "Stripe is connected" : "Connect Stripe to receive payouts", href: "/mechanic/payments" },
+  ];
+  const complete = setup.filter((s) => s.complete).length;
+  return <div className="dashboard-page">
+    <header className="dashboard-heading"><div><p className="dashboard-kicker">Your workday</p><h1>Welcome back, {name.split(" ")[0]}</h1><p>Your jobs, new opportunities and next steps.</p></div><Link href="/mechanic/requests" className="btn btn-primary"><BellRing size={16} /> Browse job requests</Link></header>
+    <section aria-label="Work overview" className="dashboard-stats">
+      <DashboardStat href="/mechanic/requests" label="Available jobs" value={requests.length} icon={BellRing} detail="Review booking requests" />
+      <DashboardStat href="/mechanic/quote-requests" label="Quote requests" value={quotes.length} icon={FileText} detail="Customers need a price" />
+      <DashboardStat href="/mechanic/jobs" label="Current jobs" value={current.length} icon={CalendarClock} detail="Manage accepted work" />
+      <DashboardStat href="/mechanic/jobs/previous" label="Completed jobs" value={h.completed} icon={CheckCircle2} detail="View your work history" />
+    </section>
+    {complete < setup.length && <DashboardPanel title="Finish setting up your account" description={`${complete} of ${setup.length} steps complete. Get ready to accept work and receive payments.`}>
+      <div className="dashboard-setup-grid">{setup.map((step) => <Link href={step.href} key={step.title} className="dashboard-setup-step"><span className={step.complete ? "text-ok" : "text-muted"}>{step.complete ? <CheckCircle2 size={21} /> : <FileCheck size={21} />}</span><span><strong>{step.title}</strong><span>{step.description}</span></span><ArrowRight size={15} className="shrink-0 text-muted" /></Link>)}</div>
+    </DashboardPanel>}
+    <div className="dashboard-columns">
+      <section className="dashboard-appointment"><span className="dashboard-kicker"><CalendarClock size={16} /> Next scheduled job</span>
+        {upcoming ? <><h2>{upcoming.car}</h2><p className="dashboard-appointment-date">{[upcoming.date, upcoming.time].filter(Boolean).join(" · ")}</p><dl><div><dt>Customer</dt><dd>{upcoming.customer}</dd></div><div><dt>Location</dt><dd>{upcoming.city} · {upcoming.postcode}</dd></div></dl><div className="dashboard-appointment-actions"><Link href={`/mechanic/jobs/${upcoming.id}`} className="btn btn-primary">Open job workspace <ArrowRight size={15} /></Link></div></> : <><h2>No upcoming visit scheduled</h2><p>{current.length ? "You have accepted jobs. Open your workspace to check or arrange the visit time." : "Explore local requests and find your next job."}</p><div className="dashboard-appointment-actions"><Link href={current.length ? "/mechanic/jobs" : "/mechanic/requests"} className="btn btn-primary">{current.length ? "Manage current jobs" : "Find your next job"}<ArrowRight size={15} /></Link></div></>}
       </section>
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between"><h2 className="font-display text-xl font-semibold">Current jobs</h2><Link href="/mechanic/jobs" className="text-sm font-semibold text-brand hover:underline">See all →</Link></div>
-        <JobList rows={current.slice(0, 6)} empty="No jobs booked right now" />
-      </section>
-      {requests.length > 0 && (
-        <section className="mt-8">
-          <div className="mb-3 flex items-center justify-between"><h2 className="font-display text-xl font-semibold">New job requests</h2><Link href="/mechanic/requests" className="text-sm font-semibold text-brand hover:underline">See all →</Link></div>
-          <ul className="card divide-y divide-line">
-            {requests.slice(0, 5).map((r) => (
-              <li key={r.id}><Link href={`/mechanic/requests/${r.id}`} className="flex items-center gap-4 px-5 py-3 hover:bg-sunken"><Wrench size={18} className="text-brand" /><span className="flex-1"><b>{r.car}</b> · {r.work.join(", ")}</span><span className="font-mono text-xs text-muted">{r.postcode} · {r.miles} mi</span></Link></li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
-  );
+      <DashboardPanel title="Your workspace" description="The tools you need throughout the day.">
+        <DashboardRow title="Messages" description="Stay in touch with customers and support" href="/messages" icon={MessageSquare} />
+        <DashboardRow title="Estimates" description="Create and manage bespoke quotes" href="/mechanic/bespokes" icon={FileText} />
+        <DashboardRow title="Payments" description="Manage your payment account" href="/mechanic/payments" icon={PoundSterling} />
+      </DashboardPanel>
+    </div>
+    <div className="dashboard-columns">
+      <DashboardPanel title="Current jobs" description="Accepted bookings that need your attention." href="/mechanic/jobs">
+        {!current.length ? <DashboardEmpty icon={ClipboardList} title="No accepted jobs yet" description="Browse local requests to fill your schedule." href="/mechanic/requests" action="Browse requests" /> : <ul className="dashboard-job-list">{current.slice(0, 4).map((j) => <li key={j.id}><Link href={`/mechanic/jobs/${j.id}`}><span className="dashboard-row-icon"><Wrench size={18} /></span><span className="min-w-0 flex-1"><strong>{j.car}</strong><span>#{j.orderId} · {j.customer}</span><span>{[j.date, j.time].filter(Boolean).join(" · ") || "Visit time to be arranged"}</span></span><ArrowRight size={17} className="shrink-0 text-brand" /></Link></li>)}</ul>}
+      </DashboardPanel>
+      <DashboardPanel title="New opportunities" description="Review the work before accepting a request." href="/mechanic/requests">
+        {!requests.length ? <DashboardEmpty icon={BellRing} title="You're up to date" description="New booking requests will appear here when available." href="/mechanic/quote-requests" action="Check quote requests" /> : <ul className="dashboard-job-list">{requests.slice(0, 4).map((r) => <li key={r.id}><Link href={`/mechanic/requests/${r.id}`}><span className="min-w-0 flex-1"><strong>{r.car}</strong><span>{r.work.join(", ") || "Service booking"}</span><span className="dashboard-job-location"><MapPin size={12} />{r.postcode} · {r.miles} mi</span></span><span className="shrink-0 text-right"><strong className="!text-brand">{gbp(r.price)}</strong><span>Job total</span></span></Link></li>)}</ul>}
+      </DashboardPanel>
+    </div>
+  </div>;
 }

@@ -28,20 +28,20 @@ function useRun() {
 function Suggest({ type, value, onChange, onPick, placeholder, id }: { type: "service" | "part"; value: string; onChange: (v: string) => void; onPick: (name: string, price?: number) => void; placeholder: string; id: string }) {
   const [items, setItems] = useState<{ name: string; price?: number; hours?: number }[]>([]);
   useEffect(() => {
-    if (value.trim().length < 2) {
-      setItems([]);
-      return;
-    }
+    if (value.trim().length < 2) return;
+    const controller = new AbortController();
     const t = setTimeout(async () => {
-      const r = await fetch(`/api/admin/search?type=${type}&q=${encodeURIComponent(value)}`);
-      if (r.ok) setItems(await r.json());
+      try {
+        const r = await fetch(`/api/admin/search?type=${type}&q=${encodeURIComponent(value)}`, { signal: controller.signal });
+        if (r.ok && !controller.signal.aborted) setItems(await r.json());
+      } catch { /* Suggestions are optional; the name can still be entered manually. */ }
     }, 200);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); controller.abort(); };
   }, [value, type]);
   return (
     <div className="relative">
-      <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="input" autoComplete="off" />
-      {items.length > 0 && (
+      <input id={id} value={value} onChange={(e) => { setItems([]); onChange(e.target.value); }} placeholder={placeholder} className="input" autoComplete="off" />
+      {value.trim().length >= 2 && items.length > 0 && (
         <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-line bg-raised shadow-card">
           {items.map((i) => (
             <li key={i.name}>
@@ -65,7 +65,7 @@ export function QuoteBuilder({ orderId, lines, total, status, labourRate }: { or
   const labours = lines.filter((l) => l.type === "labour");
   const parts = lines.filter((l) => l.type === "part");
 
-  const Table = ({ title, rows }: { title: string; rows: typeof lines }) => (
+  const renderLines = (title: string, rows: typeof lines) => (
     <div className="card overflow-hidden">
       <h4 className="border-b border-line px-4 py-2.5 font-display text-sm font-semibold">{title}</h4>
       {rows.length === 0 ? <p className="px-4 py-3 text-sm text-muted">None yet.</p> : (
@@ -106,8 +106,8 @@ export function QuoteBuilder({ orderId, lines, total, status, labourRate }: { or
           </div>
         </section>
         <div className="grid gap-4 md:grid-cols-2">
-          <Table title="Labour" rows={labours} />
-          <Table title="Parts" rows={parts} />
+          {renderLines("Labour", labours)}
+          {renderLines("Parts", parts)}
         </div>
       </div>
       <aside className="card h-fit p-5">
@@ -144,21 +144,23 @@ export function QuoteChat({ orderId, customer, messages }: { orderId: number; cu
   const router = useRouter();
   const { pending, run } = useRun();
   const form = useRef<HTMLFormElement>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  const nearBottom = useRef(true);
   useEffect(() => {
     const t = setInterval(() => router.refresh(), 8000);
     return () => clearInterval(t);
   }, [router]);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
+    const el = viewport.current;
+    if (el && nearBottom.current) el.scrollTop = el.scrollHeight;
   }, [messages.length]);
   return (
-    <div className="card flex h-[600px] flex-col overflow-hidden">
+    <div className="card flex h-[min(600px,70dvh)] min-h-0 flex-col overflow-hidden">
       <header className="border-b border-line px-5 py-3">
         <h3 className="font-display text-base font-semibold">Chat with {customer}</h3>
         <p className="text-xs text-muted">The customer gets an email with a reply link for every message.</p>
       </header>
-      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-sunken/40 p-4">
+      <div ref={viewport} onScroll={() => { const el = viewport.current; if (el) nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }} className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain bg-sunken/40 p-4">
         {messages.length === 0 && <p className="text-center text-sm text-muted">No messages yet.</p>}
         {messages.map((m) => {
           const mine = m.sender === "admin";
@@ -172,13 +174,13 @@ export function QuoteChat({ orderId, customer, messages }: { orderId: number; cu
                 ) : (
                   <a href={asset(m.file)} target="_blank" rel="noreferrer" className="mb-1 flex items-center gap-1 text-xs underline"><Paperclip size={12} /> Attachment</a>
                 ))}
-                {m.text && <p className="whitespace-pre-wrap break-words">{m.text}</p>}
+                {m.text && <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.text}</p>}
                 <div className="mt-1 text-right font-mono text-[10px] opacity-70">{new Date(m.at).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
               </div>
             </div>
           );
         })}
-        <div ref={end} />
+
       </div>
       <form ref={form} onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); run(() => sendQuoteChat(orderId, fd), () => form.current?.reset()); }} className="flex items-center gap-2 border-t border-line p-3">
         <label className="cursor-pointer rounded-md p-2 text-muted hover:bg-sunken hover:text-ink" title="Attach file">

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ServiceChooser, type Group } from "@/components/booking/ServiceChooser";
-import { CarSummary, Steps } from "@/components/booking/Steps";
+import { BookingLayout } from "@/components/booking/BookingLayout";
+import { CarSummary } from "@/components/booking/Steps";
 import { buildCart, getSettings, labourRate, MOT_ID, priceServices } from "@/lib/booking/pricing";
 import { loadBooking } from "@/lib/booking/state";
 import { db } from "@/lib/db";
-import { PageHead } from "@/components/site/blocks";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Choose services" };
@@ -48,9 +48,7 @@ export default async function ChooseService({ params }: { params: Promise<{ id: 
   ].filter((t) => !!t);
 
   return (
-    <>
-    <PageHead top={<Steps at={2} />} eyebrow="Build your booking" title="Choose your services">Add what your car needs. Prices update as you go.</PageHead>
-    <section className="site-container py-10 sm:py-12">
+    <BookingLayout step={2} title="Choose the right care for your car" description="Explore services, check the details and build your booking. Your total updates as you go." back={{href:"/choose-category",label:"All service categories"}}>
       <ServiceChooser
         initialTab={Number(current.id)}
         tabs={tabs}
@@ -60,9 +58,8 @@ export default async function ChooseService({ params }: { params: Promise<{ id: 
         diagnostics={diagnostics.map((s) => row(s.id)).filter((x) => !!x)}
         cart={cart}
         ids={b.booking.cart}
-        car={<CarSummary reg={b.booking.reg} car={b.car} />}
+        car={<CarSummary reg={b.booking.reg} car={b.car} postcode={b.postcode.postcode}/>}
       />
-    </section>
-    </>
+    </BookingLayout>
   );
 }

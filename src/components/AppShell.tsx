@@ -1,7 +1,8 @@
 "use client";
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { logout } from "@/app/login/actions";
 import type { Role } from "@/lib/session";
 import { initials } from "@/lib/format";
@@ -25,7 +26,33 @@ export function AppShell({
   notifications?: { id: number; title: string; description: string; link: string; at: string | null }[];
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const messaging = pathname === "/messages";
+  useEffect(() => {
+    if (!messaging) return;
+    const viewport = window.visualViewport;
+    const update = () => document.documentElement.style.setProperty("--workspace-height", `${viewport?.height ?? window.innerHeight}px`);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    update();
+    viewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update);
+    return () => {
+      document.body.style.overflow = previous;
+      document.documentElement.style.removeProperty("--workspace-height");
+      viewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [messaging]);
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => { document.body.style.overflow = previous; window.removeEventListener("keydown", close); };
+  }, [open]);
   const [mini, setMini] = useState(miniInitial);
   const toggleMini = () => {
     const next = !mini;
@@ -42,7 +69,7 @@ export function AppShell({
 
   return (
     <ToastProvider>
-    <div className={`workspace-shell min-h-screen bg-sunken lg:grid ${mini ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[260px_1fr]"}`}>
+    <div className={`workspace-shell ${messaging ? "is-messaging" : ""} min-h-dvh bg-sunken lg:grid ${mini ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[260px_1fr]"}`}>
       {/* desktop sidebar (full or icon rail) */}
       <aside className="sticky top-0 hidden h-screen flex-col border-r border-night-line bg-night lg:flex">
         {mini ? (
@@ -59,7 +86,7 @@ export function AppShell({
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <button aria-label="Close menu" className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-night">
+          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[90vw] flex-col bg-night">
             <div className="flex items-center justify-between">
               {brand}
               <button aria-label="Close menu" onClick={() => setOpen(false)} className="mr-3 rounded-md p-2 text-night-muted hover:text-night-ink">
@@ -71,9 +98,9 @@ export function AppShell({
         </div>
       )}
 
-      <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-raised/90 px-4 backdrop-blur sm:px-8">
-          <button aria-label="Open menu" onClick={() => setOpen(true)} className="rounded-md p-2 text-muted hover:text-ink lg:hidden">
+      <div className="workspace-body flex min-w-0 flex-col">
+        <header className="workspace-topbar sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-line bg-raised/90 px-4 backdrop-blur sm:px-8">
+          <button aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)} className="rounded-md p-2 text-muted hover:text-ink lg:hidden">
             <Menu size={20} />
           </button>
           <button
@@ -102,7 +129,7 @@ export function AppShell({
             </div>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
+        <main className="min-w-0 flex-1 px-3 py-4 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
     </ToastProvider>

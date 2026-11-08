@@ -1,4 +1,5 @@
 "use server";
+import { notify, notifyOrder } from "@/lib/pwa/notify";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -58,6 +59,7 @@ export async function sendGarageRequest(id: number, mechanicId: number): Promise
   const existing = await db.orderrequests.findFirst({ where: { user_id: mechanic.id, order_id: order.id } });
   if (existing) await db.orderrequests.update({ where: { id: existing.id }, data: { status: "pending", updated_at: now } });
   else await db.orderrequests.create({ data: { order_id: order.id, user_id: mechanic.id, status: "pending", created_at: now, updated_at: now } });
+  await notifyOrder(order.id, `user:${mechanic.id}`, false);
   queueMail(
     requestToMechanic({
       mechanic,
@@ -162,6 +164,7 @@ export async function sendAdminOrderMessage(orderId: number, mechanicId: number,
   await db.resolutions.create({ data: { order_id: order.id, sender_id: mechanic.id, receiver_id: order.user_id, admin: true, message: body, seen: 0, created_at: now, updated_at: now } });
   const link = order.orderassigns[0] ? `/app/resolution/chat/${order.token}` : `/app/resolution/question/${mechanic.id}/order/${order.token}/customer/${order.user_id}`;
   const from = " Smart Servicing Centre ";
+  for (const audience of [`user:${order.user_id}`, `user:${mechanic.id}`]) await notify({ audience, kind: "message", title: "New booking message", body: `Smart Servicing Centre has sent an update about booking #${order.id}.`, url: "/messages" });
   queueMail(messageCenter({ name: `${order.users.fname} ${order.users.lname}`, email: order.users.email }, order.id, from, link), 20_000);
   queueMail(messageCenter({ name: `${mechanic.fname} ${mechanic.lname}`, email: mechanic.email }, order.id, from, link), 20_000);
   revalidatePath(path(orderId));

@@ -1,4 +1,5 @@
 "use server";
+import { notify, notifyMessage } from "@/lib/pwa/notify";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -80,6 +81,7 @@ export async function sendOrderMessage(orderId: number, option: number, form: Fo
   const data = { subject, option_one: optionOne, option_two: optionTwo, message, updated_at: now };
   if (existing) await db.ordermessages.update({ where: { id: existing.id }, data });
   else await db.ordermessages.create({ data: { ...data, order_id: order.id, created_at: now } });
+  await notify({ audience: "staff", kind: "message", title: "New customer request", body: `A customer sent a request about booking #${order.id}.`, url: `/admin/orders/view/${order.id}` });
   queueMail(messageCentreToAdmin(subject, message), 20_000);
   const a = order.orderassigns[0];
   if (a) {
@@ -89,6 +91,7 @@ export async function sendOrderMessage(orderId: number, option: number, form: Fo
         { order_id: order.id, sender_id: u.id, receiver_id: a.user_id, message, created_at: now, updated_at: now },
       ],
     });
+    await notifyMessage(order.id, `user:${a.user_id}`, `${order.id}:p:${u.id}`);
     queueMail(messageCenter({ name: `${a.users.fname} ${a.users.lname}`, email: a.users.email }, order.id, ` your customer (${u.fname} ${u.lname})`, `/app/resolution/chat/${order.token}`));
     return { ok: true, message: "Message sent successfully, You will receive an email when there is an update.", link: `/messages?thread=${order.id}:p:${a.user_id}` };
   }
@@ -114,6 +117,7 @@ export async function askQuestion(requestId: number, message: string): Promise<R
   if (!r) return { ok: false, message: "Quote not found." };
   const now = new Date();
   await db.resolutions.create({ data: { order_id: r.order_id, sender_id: u.id, receiver_id: r.user_id, message: message.trim(), created_at: now, updated_at: now } });
+  await notifyMessage(r.order_id, `user:${r.user_id}`, `${r.order_id}:p:${u.id}`);
   queueMail(messageCenter({ name: `${r.users.fname} ${r.users.lname}`, email: r.users.email }, r.order_id, `your customer ${u.fname} ${u.lname}`, `/app/resolution/question/${r.users.id}/order/${r.orders.token}/customer/${u.id}`));
   return { ok: true, message: "Message sent successfully, You will receive an email when there is an update", link: `/messages?thread=${r.order_id}:p:${r.user_id}` };
 }
@@ -189,6 +193,7 @@ export async function sendQuoteChat(orderId: number, form: FormData): Promise<R>
   const now = new Date();
   const path = isFile(file) ? await saveUpload(file, "uploads/message", true) : null;
   await db.quotechats.create({ data: { sender: "customer", order_id: o.id, message: message || null, file: path, created_at: now, updated_at: now } });
+  await notify({ audience: "staff", kind: "message", title: "New quote message", body: `A customer has sent a message about quote #${o.id}.`, url: `/admin/quotes/view/${o.id}?tab=chat` });
   queueMail(adminQuoteChat(u, o.id, message || null));
   revalidatePath(`/portal/quotes/${orderId}/chat`);
   return { ok: true, message: "Message sent" };

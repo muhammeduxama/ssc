@@ -1,3 +1,4 @@
+import { notifyMessage } from "./pwa/notify";
 import "server-only";
 import { db } from "./db";
 import { isStaff, type Session } from "./session";
@@ -221,7 +222,7 @@ export async function sendMessage(s: Session, key: string, text: string) {
 
   if (k.kind === "support") {
     if (!(await canSupport(s, k.orderId, k.userId))) return false;
-    await db.adminresolutions.create({
+    const saved = await db.adminresolutions.create({
       data: {
         order_id: BigInt(k.orderId),
         user_id: BigInt(k.userId),
@@ -232,6 +233,7 @@ export async function sendMessage(s: Session, key: string, text: string) {
         updated_at: now,
       },
     });
+    await notifyMessage(k.orderId, isStaff(s) ? `user:${k.userId}` : "staff", `${k.orderId}:s:${k.userId}`, `support-message:${saved.id}`);
     // Jobs\AdminMechanicChat: email the other side of the support chat.
     const order = await db.orders.findUnique({ where: { id: BigInt(k.orderId) }, select: { token: true } });
     if (order) {
@@ -243,9 +245,10 @@ export async function sendMessage(s: Session, key: string, text: string) {
     return true;
   }
   if (!(await canMessagePeer(s, k.orderId, k.userId))) return false;
-  await db.resolutions.create({
+  const saved = await db.resolutions.create({
     data: { order_id: BigInt(k.orderId), sender_id: BigInt(s.id), receiver_id: BigInt(k.userId), admin: false, message: body, seen: 0, created_at: now, updated_at: now },
   });
+  await notifyMessage(k.orderId, `user:${k.userId}`, `${k.orderId}:p:${s.id}`, `direct-message:${saved.id}`);
   // ResolutionController@sendMessage: email the receiver with a link back to the conversation.
   const [order, to, from] = await Promise.all([
     db.orders.findUnique({ where: { id: BigInt(k.orderId) }, select: { token: true, user_id: true, orderassigns: { select: { id: true }, take: 1 } } }),

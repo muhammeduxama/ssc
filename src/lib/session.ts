@@ -46,6 +46,16 @@ async function currentHash(kind: Session["kind"], id: string) {
   return u ? { hash: u.password, active: u.status } : null;
 }
 
+async function revokePushDevice() {
+  const jar = await cookies();
+  const hash = jar.get("ssc-push-device")?.value;
+  if (hash) {
+    const s = await getSession();
+    if (s) try { await db.pushSubscription.deleteMany({ where: { endpointHash: hash, ownerKey: `${s.kind}:${s.id}` } }); } catch { console.warn("[push] Device subscription could not be cleared."); }
+    jar.delete("ssc-push-device");
+  }
+}
+
 export async function createSession(s: Session) {
   const cur = await currentHash(s.kind, s.id);
   const hash = typeof cur === "string" ? cur : cur?.hash;
@@ -55,6 +65,7 @@ export async function createSession(s: Session) {
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(key);
+  await revokePushDevice();
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
@@ -65,6 +76,7 @@ export async function createSession(s: Session) {
 }
 
 export async function destroySession() {
+  await revokePushDevice();
   (await cookies()).delete(SESSION_COOKIE);
 }
 

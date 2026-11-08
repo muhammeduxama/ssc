@@ -1,4 +1,5 @@
 "use server";
+import { notifyOrder } from "@/lib/pwa/notify";
 import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 import { buildCart, addToBasket, removeFromBasket, type Cart } from "@/lib/booking/pricing";
@@ -187,6 +188,7 @@ export async function saveRepairQuote(serviceId: number, form: FormData): Promis
     });
     return o;
   });
+  await notifyOrder(order.id, "staff", true);
   queueMail(newOrderToAdmin({ type: "quote", orderId: order.id, postcode: b.postcode.postcode, service: service.name }));
   queueMail(quotationReceived(user, { id: order.id, car: parseCar(order.car_data), services: [service.name] }), 20_000);
   return { ok: true, message: "Your quote request has been sent", link: `/services/${order.id}/status` };
@@ -205,6 +207,7 @@ export async function saveCard(orderId: number, setupIntentId: string): Promise<
     const price = Number(order.price ?? 0);
     const now = new Date();
     await db.notifications.create({ data: { link: `/admin/orders/view/${order.id}`, title: `New Order is Received in ${order.postcodes.postcode}`, description: `New order #${order.id} is received in ${order.postcodes.postcode}`, created_at: now, updated_at: now } });
+    await notifyOrder(order.id);
     queueMail(newOrderToAdmin({ type: "order", orderId: order.id, postcode: order.postcodes.postcode, service, price }));
     queueMail(
       newOrderCustomer(r.me, {
@@ -222,7 +225,10 @@ export async function saveCard(orderId: number, setupIntentId: string): Promise<
       const d = distanceMiles(Number(order.postcodes.lat), Number(order.postcodes.long), Number(m.lat), Number(m.long));
       if (d > Number(m.radius)) continue;
       const exists = await db.orderrequests.findFirst({ where: { order_id: order.id, user_id: m.id } });
-      if (!exists) await db.orderrequests.create({ data: { order_id: order.id, user_id: m.id, created_at: now, updated_at: now } });
+      if (!exists) {
+        await db.orderrequests.create({ data: { order_id: order.id, user_id: m.id, created_at: now, updated_at: now } });
+        await notifyOrder(order.id, `user:${m.id}`);
+      }
       for (const delay of [20_000, 3600_000, 3 * 3600_000]) await schedule("informMechanic", { orderId: String(order.id), mechanicId: String(m.id) }, delay);
     }
   }

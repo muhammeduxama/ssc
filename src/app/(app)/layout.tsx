@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
     {impersonating && <ImpersonationBanner name={s.name} />}
-    <AppShell user={{ name: s.name, email: s.email, role: s.role }} unread={unread} miniInitial={mini} notifications={notifications}>
+    <AppShell accountKey={`${s.kind}:${s.id}`} user={{ name: s.name, email: s.email, role: s.role }} unread={unread} miniInitial={mini} notifications={notifications}>
       {unverified ? (
         <div className="card mx-auto mt-10 max-w-lg p-8">
           <span className="eyebrow">One more step</span>

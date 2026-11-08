@@ -1,4 +1,5 @@
 "use server";
+import { notify, notifyOrder } from "@/lib/pwa/notify";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -73,6 +74,7 @@ export async function sendQuoteRequest(orderId: number, mechanicId: number): Pro
   const req = await db.orderrequests.findFirst({ where: { order_id: order.id, user_id: mechanic.id } });
   if (req) await db.orderrequests.update({ where: { id: req.id }, data: { status: "pending", updated_at: now } });
   else await db.orderrequests.create({ data: { order_id: order.id, user_id: mechanic.id, status: "pending", created_at: now, updated_at: now } });
+  await notifyOrder(order.id, `user:${mechanic.id}`, true);
   queueMail(quotationRequest({ ...order, postcode: order.postcodes.postcode, services: order.ordertracks.map((t) => t.services.name) }, mechanic));
   revalidatePath(path(orderId));
   return { ok: true, message: "Request sent." };
@@ -89,7 +91,10 @@ export async function sendQuoteChat(orderId: number, form: FormData): Promise<Re
   const stored = isFile(file) ? await saveUpload(file, "uploads/message", true) : null;
   await db.quotechats.create({ data: { order_id: BigInt(orderId), sender: "admin", message: text || null, file: stored, created_at: now, updated_at: now } });
   const order = await db.orders.findUnique({ where: { id: BigInt(orderId) }, include: { users: true } });
-  if (order) queueMail(customerQuoteChat(order, text));
+  if (order) {
+    await notify({ audience: `user:${order.user_id}`, kind: "message", title: "New quote message", body: `Smart Servicing Centre has replied about quote #${order.id}.`, url: `/portal/quotes/${order.id}/chat` });
+    queueMail(customerQuoteChat(order, text));
+  }
   revalidatePath(path(orderId));
   return { ok: true, message: "Message sent." };
 }

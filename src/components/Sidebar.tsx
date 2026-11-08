@@ -15,12 +15,11 @@ export function Sidebar({ nav, unread, onNavigate, mini = false }: Props) {
   const path = usePathname();
   const sp = useSearchParams();
   const here = `${path}${sp.toString() ? `?${sp}` : ""}`;
-  const queryMatch = nav.flatMap((g) => g.items).some((i) => i.href.includes("?") && here === i.href);
-  const isOn = (href: string) => {
-    if (href.includes("?")) return here === href;
-    if (path === href) return !queryMatch;
-    return href !== "/dashboard" && path.startsWith(href + "/");
-  };
+  const links = nav.flatMap((g) => g.items);
+  const queryMatch = links.find((i) => i.href.includes("?") && here === i.href)?.href;
+  const activePath = links.filter((i) => !i.href.includes("?") && (path === i.href || (i.href !== "/dashboard" && path.startsWith(i.href + "/"))))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const isOn = (href: string) => href === (queryMatch ?? activePath);
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(nav.map((g) => [g.group, !g.collapsible || g.items.some((i) => isOn(i.href))])),
   );

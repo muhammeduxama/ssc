@@ -149,6 +149,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/((?!legacy/).*)", headers: securityHeaders },
+      { source: "/sw.js", headers: [
+        { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+      ] },
       // Old uploads: same headers, but a sandboxing CSP so an uploaded SVG can never run script.
       {
         source: "/legacy/:path*",

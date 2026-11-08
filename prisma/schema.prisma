@@ -1410,3 +1410,38 @@ model login_link_uses {
 
   @@index([used_at], map: "login_link_uses_used_at_index")
 }
+
+// Browser subscriptions are bound to an account and its current password version.
+model PushSubscription {
+  endpointHash String   @id @db.VarChar(64)
+  ownerKey     String   @db.VarChar(64)
+  role         String   @db.VarChar(24)
+  version      String   @db.VarChar(16)
+  endpoint     String   @db.Text
+  p256dh       String   @db.VarChar(255)
+  auth         String   @db.VarChar(255)
+  sound        Boolean  @default(true)
+  updatedAt    DateTime @default(now()) @db.DateTime(3)
+
+  @@index([ownerKey])
+  @@map("pwa_push_subscriptions")
+}
+
+// Durable notification feed and push outbox. Audience is "staff" or "user:<id>".
+model AppAlert {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  eventKey      String    @unique @db.VarChar(191)
+  audience      String    @db.VarChar(64)
+  kind          String    @db.VarChar(24)
+  title         String    @db.VarChar(180)
+  body          String    @db.VarChar(255)
+  url           String    @db.VarChar(512)
+  createdAt     DateTime  @default(now()) @db.DateTime(3)
+  deliveredAt   DateTime? @db.DateTime(3)
+  nextAttemptAt DateTime  @default(now()) @db.DateTime(3)
+  attempts      Int       @default(0)
+
+  @@index([audience, id])
+  @@index([deliveredAt, nextAttemptAt])
+  @@map("pwa_alerts")
+}

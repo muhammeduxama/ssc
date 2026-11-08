@@ -1,4 +1,5 @@
 "use client";
+import { AppAlerts } from "./pwa/AppAlerts";
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,12 +16,14 @@ import { Logo } from "@/components/Logo";
 
 export function AppShell({
   user,
+  accountKey,
   unread,
   miniInitial = false,
   notifications,
   children,
 }: {
   user: { name: string; email: string; role: Role };
+  accountKey: string;
   unread: number;
   miniInitial?: boolean;
   notifications?: { id: number; title: string; description: string; link: string; at: string | null }[];
@@ -112,6 +115,7 @@ export function AppShell({
             {mini ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
           </button>
           <div className="ml-auto flex items-center gap-4">
+            <AppAlerts key={accountKey} accountKey={accountKey}/>
             {notifications && <NotificationBell items={notifications} />}
             <div className="flex items-center gap-3 border-l border-line pl-4">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-soft font-mono text-xs font-medium text-brand" aria-hidden>

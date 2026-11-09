@@ -1,7 +1,9 @@
 import { VehicleMark } from "@/components/VehicleMark";
-import { DetailPage, DetailHeader } from "@/components/DetailPage";
+import { CalendarClock, MapPin, PoundSterling, ReceiptText } from "lucide-react";
+import { DetailPage, DetailHeader, DetailMetrics } from "@/components/DetailPage";
 import { notFound } from "next/navigation";
 import { RequestActions } from "@/components/mechanic/RequestActions";
+import { Registration } from "@/components/mechanic/WorkList";
 import { Field } from "@/components/ui";
 import { asset } from "@/lib/asset";
 import { gbp } from "@/lib/format";
@@ -24,18 +26,17 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   return (
     <DetailPage>
       <DetailHeader back={{ href: "/mechanic/requests", label: "Job requests" }} eyebrow={`Booking #${r.order.id} · ${r.order.service}`} title={r.carTitle} />
+      <DetailMetrics items={[
+        { label: "Your earnings", value: gbp(r.price - r.commission), hint: "After the platform fee", icon: PoundSterling },
+        { label: "Customer total", value: gbp(r.price), hint: `Platform fee ${gbp(r.commission)}`, icon: ReceiptText },
+        { label: "Location", value: r.customer.postcode, hint: `${r.customer.city} · ${r.miles} mi`, icon: MapPin },
+        { label: "Preferred times", value: String(r.schedule.reduce((total, day) => total + day.times.length, 0)), hint: "Choose a slot to accept", icon: CalendarClock },
+      ]}/>
       {closed ? (
         <div className="card p-8 text-center"><h2 className="font-display text-xl font-semibold">{closed}</h2></div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
+        <div className="mech-request-columns">
           <div className="space-y-4">
-            <section className="card p-6">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div><div className="font-mono text-[11px] uppercase tracking-wider text-muted">Total price</div><div className="font-display text-3xl font-medium">{gbp(r.price)}</div></div>
-                <div><div className="font-mono text-[11px] uppercase tracking-wider text-muted">Job fee</div><div className="font-display text-3xl font-medium text-muted">{gbp(r.commission)}</div></div>
-                <div><div className="font-mono text-[11px] uppercase tracking-wider text-muted">You earn</div><div className="font-display text-3xl font-medium text-brand">{gbp(r.price - r.commission)}</div><div className="text-xs text-muted">After Smart Servicing Centre commission.</div></div>
-              </div>
-            </section>
             {(r.order.notes || r.order.sscNotes) && (
               <section className="card border-warn bg-warn-soft/40 p-5 text-sm">
                 {r.order.notes && <p><b>Customer says:</b> {r.order.notes}</p>}
@@ -47,7 +48,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <VehicleMark make={r.car.make} src={asset(r.car.logo)}/>
                 {[r.car.model, r.car.engine, r.car.year, r.car.fuel].filter(Boolean).map((x) => <span key={String(x)} className="pill border-line">{x}</span>)}
-                <span className="ml-auto rounded-md border-2 border-black bg-[#f7ce35] px-3 py-1 font-mono font-bold tracking-widest text-black">{String(r.car.reg ?? "").toUpperCase()}</span>
+                <Registration value={String(r.car.reg ?? "")}/>
               </div>
               <dl className="grid gap-4 sm:grid-cols-3">
                 <Field label="Customer">{r.customer.name}</Field>
@@ -67,9 +68,9 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
               <p className="mt-4 rounded-lg bg-sunken p-3 text-xs text-muted">The prices represent a parts budget (VAT inc.) expected to cover your cost. Any follow-on work is charged at the local labour rate of {gbp(r.labourRate)} per hour.</p>
             </section>
           </div>
-          <div className="space-y-4">
+          <aside className="space-y-4 mech-request-sidebar">
             {r.status === "pending" ? <RequestActions id={r.id} schedule={r.schedule} blocked={blocked} /> : <div className="card p-6 text-sm text-muted">This request is <b className="capitalize text-ink">{r.status}</b>.</div>}
-          </div>
+          </aside>
         </div>
       )}
     </DetailPage>

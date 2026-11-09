@@ -23,7 +23,7 @@ export default async function BespokePage({ params }: { params: Promise<{ id: st
     <DetailPage>
       <DetailHeader back={{ href: "/mechanic/bespokes", label: "Bespoke quotes" }} eyebrow={`Estimate #${id}`} title={carTitle(c)} />
       <section className="card mb-4 p-6">
-        <dl className="grid gap-4 sm:grid-cols-4">
+        <dl className="mech-identity-grid">
           <Field label="Customer">{u ? [u.fname, u.lname].filter(Boolean).join(" ") || "—" : "—"}</Field>
           <Field label="Email">{u?.email}</Field>
           <Field label="Vehicle">{[c.make, c.model, c.engine, c.fuel, c.year].filter(Boolean).join(" ")} · <span className="font-mono">{c.reg}</span></Field>

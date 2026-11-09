@@ -1,4 +1,4 @@
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2, ExternalLink, LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { Empty, PageHeader } from "@/components/ui";
 import { db } from "@/lib/db";
@@ -25,10 +25,10 @@ export default async function Payments({ searchParams }: { searchParams: Promise
   const earned = jobs.reduce((t, j) => t + Number(j.orders.orderpayments[0]?.mechanic_payment ?? 0), 0);
   return (
     <>
-      <PageHeader eyebrow="Earnings" title="Payments" description="Manage your Stripe connection and review payments for completed jobs." />
+      <PageHeader eyebrow="Business overview" title="Payments & earnings" description="Your payout account and a clear record of payments from completed work."><Link href="/messages" className="btn btn-secondary"><LifeBuoy size={16}/> Payment support</Link></PageHeader>
       {sp.stripe === "error" && <p className="mb-4 rounded-lg border border-danger bg-danger-soft px-4 py-3 text-sm">Stripe didn’t finish connecting. Please try again.</p>}
-      <div className="mb-6 grid gap-4 md:grid-cols-2">
-        <section className="card p-6">
+      <div className="mech-payment-overview">
+        <section className="mech-payment-card">
           <h2 className="font-display text-lg font-semibold">Stripe payouts</h2>
           {conn?.stripe_user_id ? (
             <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-ok"><CheckCircle2 size={18} /> Connected ({conn.livemode ? "live" : "test"} mode) · {conn.stripe_user_id}</p>
@@ -39,14 +39,14 @@ export default async function Payments({ searchParams }: { searchParams: Promise
             </>
           )}
         </section>
-        <section className="card p-6">
+        <section className="mech-payment-card">
           <div className="font-mono text-[11px] uppercase tracking-wider text-muted">Paid out for completed jobs</div>
-          <div className="mt-2 font-display text-4xl font-medium text-brand">{gbp(earned)}</div>
-          <p className="mt-1 text-sm text-muted">Stripe credits your bank account within 5 working days.</p>
+          <div className="mech-payout-total">{gbp(earned)}</div>
+          <p className="mt-1 text-sm text-muted">Recorded payments for your completed jobs. Bank arrival times follow your Stripe payout schedule.</p>
         </section>
       </div>
       {jobs.length === 0 ? <Empty title="No completed jobs yet" /> : (
-        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[720px] section-responsive-table">
+        <div className="card overflow-hidden"><div className="mech-panel-heading"><div><h2>Payment history</h2><p>Charges, platform fees and your recorded share.</p></div><span>{jobs.length} completed jobs</span></div><div className="overflow-x-auto"><table className="w-full min-w-[720px] section-responsive-table">
           <thead><tr><th className="th">Booking</th><th className="th">Vehicle</th><th className="th text-right">Charged</th><th className="th text-right">Fee</th><th className="th text-right">You received</th><th className="th">Completed</th></tr></thead>
           <tbody>{jobs.map((j) => { const p = j.orders.orderpayments[0]; const c = parseCar(j.orders.car_data); return (
             <tr key={String(j.id)}>

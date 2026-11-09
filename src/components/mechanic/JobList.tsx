@@ -1,35 +1,11 @@
-import { CalendarClock, MapPin } from "lucide-react";
-import Link from "next/link";
-import { Empty } from "@/components/ui";
-import { gbp } from "@/lib/format";
 import type { myJobs } from "@/lib/mechanic/jobs";
-
-export function JobList({ rows, empty }: { rows: Awaited<ReturnType<typeof myJobs>>; empty: string }) {
-  if (!rows.length) return <Empty title={empty} />;
-  return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {rows.map((j) => (
-        <Link key={j.id} href={`/mechanic/jobs/${j.id}`} className="card flex min-w-0 flex-col p-4 sm:p-5 transition hover:-translate-y-0.5 hover:shadow-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="font-mono text-xs text-muted">Booking #{j.orderId}</div>
-              <div className="break-words font-display text-lg font-semibold">{j.car}</div>
-              <div className="text-sm text-muted">{j.customer}</div>
-            </div>
-            <span className="rounded border border-ink/20 bg-[#f7ce35] px-1.5 py-0.5 font-mono text-xs font-semibold text-black">{j.reg}</span>
-          </div>
-          <p className="mt-2 line-clamp-2 text-sm">{j.work.join(", ")}</p>
-          <div className="mt-4 flex items-end justify-between gap-2 text-xs text-muted">
-            <div className="space-y-1">
-              <div className="flex items-center gap-1"><CalendarClock size={14} /> {j.time ? `${j.time} · ${j.date}` : "Visit not scheduled"}</div>
-              <div className="flex items-center gap-1"><MapPin size={14} /> {j.city} · {j.postcode}</div>
-            </div>
-            <div className="shrink-0 font-display text-xl font-medium text-brand">{gbp(j.price)}</div>
-          </div>
-          <span className="mt-3 border-t border-line pt-3 text-xs font-semibold text-brand">View job & manage booking →</span>
-          {j.followOn && <div className="mt-3 border-t border-line pt-2 font-mono text-[11px] text-muted">Follow-on quote: {j.followOn.status} · {gbp(j.followOn.price)}</div>}
-        </Link>
-      ))}
-    </div>
-  );
+import { WorkList } from "./WorkList";
+export function JobList({ rows, empty, completed = false }: { rows: Awaited<ReturnType<typeof myJobs>>; empty: string; completed?: boolean }) {
+  return <WorkList mode={completed ? "previous" : "current"} empty={empty} items={rows.map(j => ({
+    id: j.id, orderId: j.orderId, href: `/mechanic/jobs/${j.id}`, car: j.car, reg: j.reg,
+    work: j.work.join(", "), customer: j.customer, location: [j.city, j.postcode].filter(Boolean).join(" · "),
+    amount: j.price, amountLabel: "Booking value", status: completed ? "completed" : "assigned",
+    timestamp: j.startAt, schedule: j.date ? [j.date, j.time].filter(Boolean).join(" · ") : "Visit time to be arranged",
+    note: j.followOn ? `Follow-on quote: ${j.followOn.status}` : undefined,
+  }))}/>;
 }

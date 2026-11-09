@@ -264,7 +264,7 @@ export async function quoteRequest(mechanicId: string, id: number) {
     order: { id: Number(o.id), status: o.status, notes: o.notes ?? "", work: o.ordertracks.map((t) => t.services.name) },
     car,
     carTitle: carTitle(car),
-    customer: { name: `${o.users.fname} ${o.users.lname}`.trim(), city: o.postcodes.cities?.name ?? "", postcode: o.postcodes.postcode },
+    customer: { id: Number(o.user_id), name: `${o.users.fname} ${o.users.lname}`.trim(), city: o.postcodes.cities?.name ?? "", postcode: o.postcodes.postcode },
     labourRate: Number(o.postcodes.cities?.labour_rate ?? s.labourRate),
     quote: q
       ? {

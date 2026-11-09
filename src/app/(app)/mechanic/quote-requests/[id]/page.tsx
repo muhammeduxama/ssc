@@ -17,10 +17,10 @@ export default async function QuoteRequestPage({ params }: { params: Promise<{ i
   return (
     <DetailPage>
       <DetailHeader back={{ href: "/mechanic/quote-requests", label: "Quote requests" }} eyebrow={`Repair quote #${r.order.id}`} title={r.carTitle}>
-        <Link href="/messages" className="btn btn-secondary"><MessageSquare size={16} /> Ask the customer</Link>
+        <Link href={`/messages?thread=${encodeURIComponent(`${r.order.id}:p:${r.customer.id}`)}`} className="btn btn-secondary"><MessageSquare size={16} /> Ask the customer</Link>
       </DetailHeader>
       <section className="card mb-4 p-6">
-        <dl className="grid gap-4 sm:grid-cols-4">
+        <dl className="mech-identity-grid">
           <Field label="Customer">{r.customer.name}</Field>
           <Field label="Area">{r.customer.city} · {r.customer.postcode}</Field>
           <Field label="Vehicle">{[r.car.make, r.car.model, r.car.engine, r.car.fuel, r.car.year].filter(Boolean).join(" ")}</Field>

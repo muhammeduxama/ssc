@@ -12,7 +12,8 @@ export default async function MyProfile() {
   if (!p) notFound();
   return (
     <>
-      <PageHeader eyebrow="Profile" title="My profile" />
+      <PageHeader eyebrow="Your business" title="My profile" description="Keep your business details, qualifications and coverage up to date." />
+      <nav className="mech-profile-nav" aria-label="Profile sections"><a href="#profile-edit-profile">Business details</a><a href="#profile-qualifications-accreditations">Qualifications</a><a href="#profile-upload-documents">Upload documents</a><a href="#profile-preferences">Notifications</a><a href="#profile-types-of-work-covered">Work categories</a></nav>
       <ProfileEditor p={p} staff={false} opts={{ qualifications: QUALIFICATIONS, accreditations: ACCREDITATIONS, prefs: NOTIFY_PREFS }} />
     </>
   );

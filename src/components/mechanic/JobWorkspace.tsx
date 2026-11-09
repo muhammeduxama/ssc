@@ -30,6 +30,7 @@ import { gbp } from "@/lib/format";
 import type { JobWorkspace as Job } from "@/lib/mechanic/jobs";
 import { TIME_SLOTS } from "@/lib/time";
 import { Modal } from "./Modal";
+import { Registration } from "./WorkList";
 
 function useRun() {
   const [pending, start] = useTransition();
@@ -49,7 +50,7 @@ function useRun() {
 
 function Block({ title, action, children, tone }: { title: string; action?: React.ReactNode; children: React.ReactNode; tone?: "note" }) {
   return (
-    <section className={`card detail-section overflow-hidden ${tone === "note" ? "border-warn" : ""}`}>
+    <section id={`job-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className={`card detail-section mech-profile-section overflow-hidden ${tone === "note" ? "border-warn" : ""}`}>
       <header className={`detail-section-header ${tone === "note" ? "bg-warn-soft/60" : ""}`}>
         <h2 className="font-display text-base font-semibold">{title}</h2>
         {action}
@@ -106,6 +107,7 @@ export function JobWorkspace({ j, supportThread, customerThread }: { j: Job; sup
   return (
     <div className="detail-columns">
       <div className="space-y-4">
+        <nav className="mech-job-quicklinks" aria-label="Job sections"><a href="#job-customer-information-location">Overview</a><a href="#job-appointment-time">Visit</a><a href="#job-work-required">Work & parts</a><a href="#job-photos">Photos</a><a href="#job-detected-faults">Faults</a></nav>
         <div className="flex flex-wrap gap-2">
           <Link href={`/messages?thread=${encodeURIComponent(supportThread)}`} className="btn btn-secondary"><LifeBuoy size={16} /> Smart Servicing</Link>
           <Link href={`/messages?thread=${encodeURIComponent(customerThread)}`} className="btn btn-secondary"><MessageSquare size={16} /> Customer</Link>
@@ -137,7 +139,7 @@ export function JobWorkspace({ j, supportThread, customerThread }: { j: Job; sup
           <div className="flex flex-wrap items-center gap-2">
             <VehicleMark make={j.car.make} src={asset(j.car.logo)}/>
             {[j.car.model, j.car.engine, j.car.year, j.car.fuel].filter(Boolean).map((x) => <span key={String(x)} className="pill border-line">{x}</span>)}
-            <span className="ml-auto rounded-md border-2 border-black bg-[#f7ce35] px-3 py-1 font-mono font-bold tracking-widest text-black">{String(j.car.reg ?? "").toUpperCase()}</span>
+            <Registration value={String(j.car.reg ?? "")}/>
           </div>
           <p className="mt-3 text-sm">Mileage at start of booking: <b>{j.mileage >= 1 ? j.mileage.toLocaleString("en-GB") : "Not yet entered"}</b></p>
         </Block>

@@ -1,39 +1,17 @@
 import Link from "next/link";
-import { Empty, PageHeader, StatusBadge } from "@/components/ui";
-import { dateTime, gbp } from "@/lib/format";
+import { WorkList } from "@/components/mechanic/WorkList";
+import { PageHeader } from "@/components/ui";
 import { requireRole } from "@/lib/guard";
 import { quoteRequests } from "@/lib/mechanic/jobs";
-
 export const metadata = { title: "Quote requests" };
-
-/** QuoteRequest@quoteRequest (all repair requests) with the app's "needs a quote" filter as the default view. */
 export default async function QuoteRequests({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const s = await requireRole("mechanic");
   const all = (await searchParams).view === "all";
   const rows = await quoteRequests(s.id, all);
-  return (
-    <>
-      <PageHeader eyebrow={`${rows.length} ${all ? "total" : "waiting for a quote"}`} title="Quote requests" description="Review customer repair requests and send your estimates.">
-        <nav className="flex gap-1 rounded-lg border border-line bg-raised p-1 text-xs font-semibold">
-          <Link href="/mechanic/quote-requests" className={`rounded-md px-2.5 py-1.5 ${!all ? "bg-brand text-on-brand" : "text-muted"}`}>Needs a quote</Link>
-          <Link href="/mechanic/quote-requests?view=all" className={`rounded-md px-2.5 py-1.5 ${all ? "bg-brand text-on-brand" : "text-muted"}`}>All</Link>
-        </nav>
-      </PageHeader>
-      {rows.length === 0 ? <Empty title="No quote requests" body="Customers asking for a repair price near you will appear here." /> : (
-        <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[800px] section-responsive-table">
-          <thead><tr><th className="th">Request</th><th className="th">Vehicle</th><th className="th">Customer asks for</th><th className="th">Postcode</th><th className="th">Your quote</th><th className="th">Date</th></tr></thead>
-          <tbody>{rows.map((r) => (
-            <tr key={r.id} className="hover:bg-brand-soft/40">
-              <td className="td font-mono text-xs" data-label="Request"><Link href={`/mechanic/quote-requests/${r.id}`} className="font-semibold text-brand hover:underline">#{r.orderId}</Link><div className="mt-1"><StatusBadge status={r.orderStatus} /></div></td>
-              <td className="td" data-label="Vehicle">{r.car}<div className="font-mono text-xs text-muted">{r.reg}</div></td>
-              <td className="td max-w-72 text-sm" data-label="Customer asks for">{r.notes || r.work.join(", ") || "—"}</td>
-              <td className="td font-mono text-xs" data-label="Postcode">{r.postcode}</td>
-              <td className="td text-xs" data-label="Your quote">{r.quote ? <><span className="pill border-line">{r.quote.status}</span> <span className="font-mono">{gbp(r.quote.price)}</span></> : <span className="text-muted">Not started</span>}</td>
-              <td className="td font-mono text-xs text-muted" data-label="Date">{dateTime(r.created)}</td>
-            </tr>
-          ))}</tbody>
-        </table></div></div>
-      )}
-    </>
-  );
+  return <>
+    <PageHeader eyebrow="Repair opportunities" title="Quote requests" description="Review the customer’s repair needs, build your estimate and send a clear price.">
+      <nav className="mech-segmented" aria-label="Quote request filter"><Link href="/mechanic/quote-requests" aria-current={!all ? "page" : undefined}>Needs a quote</Link><Link href="/mechanic/quote-requests?view=all" aria-current={all ? "page" : undefined}>All requests</Link></nav>
+    </PageHeader>
+    <WorkList mode="quotes" empty="No quote requests" items={rows.map(r => ({ id: r.id, orderId: r.orderId, href: `/mechanic/quote-requests/${r.id}`, car: r.car, reg: r.reg, customer: r.customer, work: r.notes || r.work.join(", "), location: r.postcode, amount: r.quote?.price ?? null, amountLabel: "Your estimate", status: r.orderStatus !== "pending" ? r.orderStatus : r.quote?.status ?? "Needs a quote", date: r.created }))}/>
+  </>;
 }

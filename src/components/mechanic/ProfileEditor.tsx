@@ -21,7 +21,7 @@ type Opts = { qualifications: string[]; accreditations: string[]; prefs: string[
 
 function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
-    <section className="card p-6">
+    <section id={`profile-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="card p-6 mech-profile-section">
       <h2 className="font-display text-lg font-semibold">{title}</h2>
       {desc && <p className="mt-1 text-sm text-muted">{desc}</p>}
       <div className="mt-5">{children}</div>
@@ -206,7 +206,7 @@ export function ProfileEditor({ p, opts, staff }: { p: MechanicProfile; opts: Op
         )}
       </div>
 
-      <aside className="space-y-4">
+      <aside className="space-y-4 mech-profile-sidebar">
         <Section title="Profile picture" desc="A clear photo of your face builds trust. JPG or PNG, up to 400×400px.">
           <div className="flex items-center gap-4">
             {p.photo ? (

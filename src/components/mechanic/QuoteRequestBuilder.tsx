@@ -1,8 +1,9 @@
 "use client";
-import { SendHorizontal, Trash2 } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
 import { useState } from "react";
 import { addQuoteRequestLine, deleteQuoteRequestLine, sendQuoteRequestQuote } from "@/app/actions/mechanic-jobs";
 import { useAction } from "@/components/useAction";
+import { EstimateLines } from "./EstimateLines";
 import { gbp } from "@/lib/format";
 
 type Line = { id: number; name: string; price: number };
@@ -13,21 +14,8 @@ export function QuoteRequestBuilder({ id, labours, parts, total, commission, sta
   const [p, setP] = useState({ name: "", price: "" });
   const sent = status === "QUOTATION SENT";
   const lPrice = Number(l.hours) * labourRate + (Number(l.minutes) / 60) * labourRate;
-  const List = ({ title, rows, kind }: { title: string; rows: Line[]; kind: "labour" | "part" }) => (
-    <div className="card overflow-hidden">
-      <h3 className="border-b border-line px-4 py-2.5 font-display text-sm font-semibold">{title}</h3>
-      {rows.length === 0 ? <p className="px-4 py-3 text-sm text-muted">None yet.</p> : (
-        <ul>{rows.map((r) => (
-          <li key={r.id} className="flex items-center gap-3 border-t border-line px-4 py-2.5 text-sm first:border-t-0">
-            <span className="flex-1">{r.name}</span><span className="font-mono">{gbp(r.price)}</span>
-            {!sent && <button onClick={() => run(() => deleteQuoteRequestLine(id, kind, r.id))} aria-label={`Remove ${r.name}`} className="rounded-md p-1.5 text-danger hover:bg-danger-soft"><Trash2 size={15} /></button>}
-          </li>
-        ))}</ul>
-      )}
-    </div>
-  );
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
+    <div className="mech-editor-columns">
       <div className="space-y-4">
         {!sent && (
           <section className="card grid gap-4 p-5 md:grid-cols-2">
@@ -49,11 +37,11 @@ export function QuoteRequestBuilder({ id, labours, parts, total, commission, sta
           </section>
         )}
         <div className="grid gap-4 md:grid-cols-2">
-          <List title="Labour" rows={labours} kind="labour" />
-          <List title="Parts" rows={parts} kind="part" />
+          <EstimateLines title="Labour" rows={labours} kind="labour" busy={pending} onRemove={sent ? undefined : line => run(() => deleteQuoteRequestLine(id, "labour", line))}/>
+          <EstimateLines title="Parts" rows={parts} kind="part" busy={pending} onRemove={sent ? undefined : line => run(() => deleteQuoteRequestLine(id, "part", line))}/>
         </div>
       </div>
-      <aside className="card h-fit p-5">
+      <aside className="card h-fit p-5 mech-estimate-summary">
         <span className="eyebrow">{sent ? "Quote sent" : "Draft quote"}</span>
         <div className="mt-3 font-display text-4xl font-medium text-brand">{gbp(total)}</div>
         <div className="mt-2 space-y-1 text-sm">

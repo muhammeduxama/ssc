@@ -17,9 +17,9 @@ export function RequestActions({ id, schedule, blocked }: { id: number; schedule
   const times = schedule.find((s) => s.date === date)?.times ?? [];
 
   return (
-    <section className="card p-6">
+    <section className="card p-6 mech-schedule-panel">
       <h2 className="font-display text-lg font-semibold">Schedule the visit</h2>
-      <p className="mt-1 text-sm text-muted">When will you / should the customer arrive? Pick one of the customer’s preferred slots.</p>
+      <p className="mt-1 text-sm text-muted">Choose a preferred date and time, or offer an alternative that suits your schedule.</p>
       {blocked && <p className="mt-4 rounded-lg border border-warn bg-warn-soft px-3 py-2 text-sm">{blocked}</p>}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
@@ -36,11 +36,11 @@ export function RequestActions({ id, schedule, blocked }: { id: number; schedule
           </select>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap justify-end gap-2">
+      <div className="mech-request-actions">
         <a href={`/mechanic/requests/${id}/alternatives`} className="btn btn-secondary">Offer other times</a>
-        <button onClick={() => setRejecting(true)} className="btn btn-secondary !text-danger"><XCircle size={16} /> I can’t do this job</button>
+        <button onClick={() => setRejecting(true)} className="btn btn-secondary !text-danger"><XCircle size={16} /> Decline request</button>
         <button
-          disabled={pending || !slot}
+          disabled={pending || !slot || !!blocked}
           onClick={() => {
             if (!confirm("Are you sure you want to accept this job?")) return;
             start(async () => {

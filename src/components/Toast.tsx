@@ -26,7 +26,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function ToastViewport() {
   const items = useContext(ItemsCtx);
   return (
-      <div className="pointer-events-none fixed bottom-4 right-4 z-50 max-w-[calc(100vw-2rem)] flex flex-col gap-2" aria-live="polite">
+      <div className="toast-viewport pointer-events-none fixed bottom-4 right-4 max-w-[calc(100vw-2rem)] flex flex-col gap-2" aria-live="polite">
         {items.map((i) => (
           <div key={i.id} className={`pointer-events-auto rounded-lg border px-4 py-3 text-sm font-medium shadow-card ${i.ok ? "border-brand bg-raised" : "border-danger bg-danger-soft"}`}>
             {i.text}

@@ -1390,3 +1390,14 @@ select.vehicle-select:disabled { cursor: not-allowed; background-color: var(--su
 @media (max-width: 420px) { .mech-identity-grid dt { font-size: 10px; letter-spacing: .04em; } .mech-identity-grid dd { font-size: 12px; } }
 
 .mechanic-workspace.dashboard-page { gap: 20px; }
+
+/* Shared overlay layer: cards/tables retain rounded clipping without cutting off their menus. */
+.floating-panel { position: fixed; z-index: 1000; margin: 0; box-sizing: border-box; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--ink); box-shadow: 0 8px 30px #17203320; }
+.floating-panel.floating-menu { padding: 5px; }
+.floating-menu a { display: block; padding: 10px 12px; border-radius: 7px; font-size: 13px; line-height: 1.5; }
+.floating-menu a:hover, .floating-menu a:focus-visible { background: var(--brand-soft); color: var(--brand); outline: none; }
+.floating-notifications { font-size: 13px; }
+.floating-sidebar { padding: 8px; }
+.toast-viewport { z-index: 1100; }
+.floating-panel.pwa-panel { position: fixed; right: auto; bottom: auto; margin: 0; }
+@media (max-width: 640px) { .floating-menu a { min-height: 44px; } .floating-panel.pwa-panel { right: auto; width: auto; } }

@@ -1,4 +1,5 @@
 "use client";
+import { FloatingPanel } from "@/components/FloatingPanel";
 import { BellRing, Download, Volume2, VolumeX, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,7 +23,7 @@ export function AppAlerts({ accountKey }: { accountKey: string }) {
   const soundRef = useRef(false);
   const cursor = useRef<string | null>(null);
   const toast = useToast(); const router = useRouter();
-  const control = useRef<HTMLDivElement>(null);
+  const control = useRef<HTMLButtonElement>(null);
   const pref = `ssc-sound:${accountKey}`;
 
   useEffect(() => {
@@ -61,7 +62,6 @@ export function AppAlerts({ accountKey }: { accountKey: string }) {
     };
     const message = (event: MessageEvent) => { if (event.data?.type === "SSC_ALERT" && event.data.alert?.id) void receive(event.data.alert); };
     const unlock = () => { if (isSoundOn()) void unlockSound().catch(() => {}); };
-    const close = (event: MouseEvent) => { if (!control.current?.contains(event.target as Node)) setOpen(false); };
     const install = () => setInstallable(!!getInstallPrompt());
     const setup = async () => {
       try {
@@ -89,8 +89,7 @@ export function AppAlerts({ accountKey }: { accountKey: string }) {
     navigator.serviceWorker?.addEventListener("message", message);
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("ssc-install-ready", install);
-    document.addEventListener("click", close);
-    return () => { stopped = true; clearTimeout(timer); navigator.serviceWorker?.removeEventListener("message", message); window.removeEventListener("pointerdown", unlock); window.removeEventListener("ssc-install-ready", install); document.removeEventListener("click", close); };
+    return () => { stopped = true; clearTimeout(timer); navigator.serviceWorker?.removeEventListener("message", message); window.removeEventListener("pointerdown", unlock); window.removeEventListener("ssc-install-ready", install); };
   }, [accountKey, pref, router, toast]);
 
   const updateSubscription = async (nextSound: boolean) => {
@@ -138,9 +137,9 @@ export function AppAlerts({ accountKey }: { accountKey: string }) {
     await prompt.prompt(); const choice = await prompt.userChoice;
     if (choice.outcome === "accepted") { setInstalled(true); setInstallable(false); }
   };
-  return <div className="pwa-control" ref={control}>
-    <button className="pwa-control-trigger" onClick={() => setOpen(!open)} aria-label="Install app and notification settings" aria-expanded={open} title="Install app & alerts"><BellRing size={19}/>{unread > 0 && <span>{unread > 99 ? "99+" : unread}</span>}</button>
-    {open && <section className="pwa-panel" aria-label="App and notification settings"><header><div><h2>Install & alerts</h2><p>Stay up to date on this device.</p></div><button onClick={() => setOpen(false)} aria-label="Close notification settings"><X size={17}/></button></header>
+  return <div className="pwa-control">
+    <button ref={control} className="pwa-control-trigger" onClick={() => setOpen(!open)} aria-label="Install app and notification settings" aria-expanded={open} title="Install app & alerts"><BellRing size={19}/>{unread > 0 && <span>{unread > 99 ? "99+" : unread}</span>}</button>
+    <FloatingPanel anchor={control} open={open} onClose={() => setOpen(false)} width={350} label="App and notification settings" className="pwa-panel"><header><div><h2>Install & alerts</h2><p>Stay up to date on this device.</p></div><button onClick={() => setOpen(false)} aria-label="Close notification settings"><X size={17}/></button></header>
       <div className="pwa-settings"><button className="btn btn-secondary w-full" onClick={install} disabled={installed}><Download size={16}/>{installed ? "App installed" : installable ? "Install app" : "How to install"}</button>
         {!installed && !installable && <p>iPhone or iPad: open the browser’s Share menu and choose Add to Home Screen. Other devices: choose Install app in the browser menu.</p>}
         <div className="pwa-setting"><span><b>Push notifications</b><small>{config?.subscribed ? "Enabled on this device" : "New orders and messages, even when closed"}</small></span></div>
@@ -152,6 +151,6 @@ export function AppAlerts({ accountKey }: { accountKey: string }) {
         <button className="pwa-test-sound" onClick={() => { void playChime().then(ok => !ok && toast("Sound couldn't play. Check your browser and device sound settings.", false)); }}>Test sound</button>
       </div>
       {!!recent.length && <div className="pwa-recent"><h3>Recent alerts</h3>{recent.slice(0, 5).map(n => <Link key={n.id} href={n.url} onClick={() => setOpen(false)}><strong>{n.title}</strong><span>{n.body}</span></Link>)}</div>}
-    </section>}
+    </FloatingPanel>
   </div>;
 }

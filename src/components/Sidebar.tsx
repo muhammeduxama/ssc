@@ -1,4 +1,5 @@
 "use client";
+import { FloatingPanel } from "./FloatingPanel";
 import { Search, ChevronDown, Activity, BellRing, BookOpen, Building2, CalendarPlus, CarFront, Circle, Clock, ClipboardList, CreditCard, FileCheck, FilePlus, FileText, HelpCircle, Image, Inbox, KeyRound, Layers, LayoutDashboard, Mail, Map, MapPin, MessageSquare, Palette, PenLine, PoundSterling, Receipt, Send, Settings, Star, Tags, Upload, UserCog, UserPlus, UserRound, Users, Wrench, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -88,26 +89,25 @@ export function Sidebar({ nav, unread, onNavigate, mini = false }: Props) {
  * whose items open in a flyout on hover/click (fixed-positioned so the scrolling rail can't clip it).
  */
 function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) => boolean; badgeOf: (i: NavItem) => number }) {
-  const [fly, setFly] = useState<{ group: string; top?: number; bottom?: number; left: number } | null>(null);
+  const [fly, setFly] = useState<{ group: string; focus: boolean } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const anchor = useRef<HTMLElement>(null);
   const keep = () => { if (timer.current) clearTimeout(timer.current); };
   const close = () => {
     keep();
     timer.current = setTimeout(() => setFly(null), 150);
   };
-  const show = (group: string, el: HTMLElement) => {
+  const show = (group: string, el: HTMLElement, focus = false) => {
     keep();
-    const r = el.getBoundingClientRect();
-    // Lower icons open upwards so the menu stays on screen.
-    const up = r.top > window.innerHeight / 2;
-    setFly({ group, left: r.right + 8, ...(up ? { bottom: window.innerHeight - r.bottom } : { top: r.top }) });
+    anchor.current = el;
+    setFly({ group, focus });
   };
   const cell = (on: boolean) =>
     `relative grid h-10 w-10 place-items-center rounded-lg transition ${on ? "bg-night-active text-accent" : "text-night-muted hover:bg-night-line hover:text-night-ink"}`;
   const current = fly && nav.find((g) => g.group === fly.group);
 
   return (
-    <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4 [scrollbar-width:none]" aria-label="Main" onScroll={() => setFly(null)}>
+    <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-4 [scrollbar-width:none]" aria-label="Main" onScroll={(event) => { if (event.target === event.currentTarget) setFly(null); }}>
       {nav.map((g, gi) => {
         const GroupIcon = icon(g.icon ?? g.items[0]?.icon ?? "Circle");
         const groupOn = g.items.some((i) => isOn(i.href));
@@ -120,7 +120,7 @@ function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) =>
                   className={cell(groupOn)}
                   onMouseEnter={(e) => show(g.group, e.currentTarget)}
                   onMouseLeave={close}
-                  onClick={(e) => (fly?.group === g.group ? setFly(null) : show(g.group, e.currentTarget))}
+                  onClick={(e) => (fly?.group === g.group ? setFly(null) : show(g.group, e.currentTarget, true))}
                 >
                   <GroupIcon size={19} />
                 </button>
@@ -141,12 +141,7 @@ function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) =>
       })}
 
       {current && fly && (
-        <div
-          className="fixed z-50 max-h-[70vh] w-56 overflow-y-auto rounded-xl border border-line bg-raised p-2 shadow-card"
-          style={{ top: fly.top, bottom: fly.bottom, left: fly.left }}
-          onMouseEnter={keep}
-          onMouseLeave={close}
-        >
+        <FloatingPanel anchor={anchor} open={!!fly} onClose={() => setFly(null)} width={224} side="right" autoFocus={fly.focus} label={current.group} className="floating-sidebar"><div onMouseEnter={keep} onMouseLeave={close}>
           <div className="px-2 pb-1.5 pt-1 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted">{current.group}</div>
           {current.items.map((i) => {
             const I = icon(i.icon);
@@ -164,7 +159,7 @@ function MiniNav({ nav, isOn, badgeOf }: { nav: NavGroup[]; isOn: (h: string) =>
               </Link>
             );
           })}
-        </div>
+        </div></FloatingPanel>
       )}
     </nav>
   );

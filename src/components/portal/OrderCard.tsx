@@ -1,4 +1,5 @@
 import { ArrowUpRight, CalendarClock, ChevronDown, CreditCard, MapPin, MessageSquare, UserRound, Wrench } from "lucide-react";
+import { DropdownMenu } from "@/components/FloatingPanel";
 import Link from "next/link";
 import { cancelUnverifiedOrder } from "@/app/actions/portal";
 import { CarBrandLogo } from "@/components/CarBrandLogo";
@@ -18,16 +19,7 @@ export function ActionsMenu({ o }: { o: CardOrder }) {
     if (a?.start_at && isPast(a.start_at)) items.push([4, "My mechanic is late"]);
   }
   items.push([5, "Report a problem"]);
-  return (
-    <details className="relative">
-      <summary className="btn btn-secondary cursor-pointer list-none !py-1.5">Actions <ChevronDown size={14} /></summary>
-      <ul className="absolute right-0 z-20 mt-1 w-60 rounded-lg border border-line bg-raised p-1 shadow-card">
-        {items.map(([n, label]) => (
-          <li key={n}><Link href={`/portal/message/${o.id}/${n}`} className="block rounded-md px-3 py-2 text-sm hover:bg-sunken">{label}</Link></li>
-        ))}
-      </ul>
-    </details>
-  );
+  return <DropdownMenu items={items.map(([n, label]) => ({ href: `/portal/message/${o.id}/${n}`, label }))}/>;
 }
 
 export function OrderCard({ o }: { o: CardOrder }) {

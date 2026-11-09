@@ -1,4 +1,5 @@
 "use client";
+import { FloatingPanel } from "@/components/FloatingPanel";
 import { Paperclip, SendHorizontal, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -26,10 +27,14 @@ function useRun() {
 }
 
 function Suggest({ type, value, onChange, onPick, placeholder, id }: { type: "service" | "part"; value: string; onChange: (v: string) => void; onPick: (name: string, price?: number) => void; placeholder: string; id: string }) {
+  const anchor = useRef<HTMLInputElement>(null);
+  const request = useRef<AbortController | null>(null);
+  const [focused, setFocused] = useState(false);
   const [items, setItems] = useState<{ name: string; price?: number; hours?: number }[]>([]);
   useEffect(() => {
     if (value.trim().length < 2) return;
     const controller = new AbortController();
+    request.current = controller;
     const t = setTimeout(async () => {
       try {
         const r = await fetch(`/api/admin/search?type=${type}&q=${encodeURIComponent(value)}`, { signal: controller.signal });
@@ -40,19 +45,17 @@ function Suggest({ type, value, onChange, onPick, placeholder, id }: { type: "se
   }, [value, type]);
   return (
     <div className="relative">
-      <input id={id} value={value} onChange={(e) => { setItems([]); onChange(e.target.value); }} placeholder={placeholder} className="input" autoComplete="off" />
-      {value.trim().length >= 2 && items.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-line bg-raised shadow-card">
+      <input ref={anchor} aria-controls={focused && items.length ? `${id}-suggestions` : undefined} onKeyDown={e => { if (e.key === "ArrowDown" && items.length) { e.preventDefault(); document.getElementById(`${id}-suggestions`)?.querySelector<HTMLButtonElement>("button")?.focus(); } }} onFocus={() => setFocused(true)} id={id} value={value} onChange={(e) => { setItems([]); setFocused(true); onChange(e.target.value); }} placeholder={placeholder} className="input" autoComplete="off" />
+      <FloatingPanel anchor={anchor} open={focused && value.trim().length >= 2 && items.length > 0} onClose={() => { request.current?.abort(); setItems([]); setFocused(false); }} width="anchor" align="start" autoFocus={false} id={`${id}-suggestions`} label="Search suggestions" className="floating-suggestions"><ul>
           {items.map((i) => (
             <li key={i.name}>
-              <button type="button" onClick={() => { onPick(i.name, i.price); setItems([]); }} className="flex w-full justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-brand-soft">
+              <button type="button" onClick={() => { onPick(i.name, i.price); setItems([]); setFocused(false); }} className="flex w-full justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-brand-soft">
                 <span>{i.name}</span>
                 <span className="font-mono text-xs text-muted">{i.price !== undefined ? gbp(i.price) : `${i.hours}h`}</span>
               </button>
             </li>
           ))}
-        </ul>
-      )}
+        </ul></FloatingPanel>
     </div>
   );
 }

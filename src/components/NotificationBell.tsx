@@ -1,7 +1,8 @@
 "use client";
 import { Bell } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { FloatingPanel } from "./FloatingPanel";
 import { markNotification } from "@/app/actions/admin-tools";
 import { useAction } from "@/components/useAction";
 
@@ -9,21 +10,16 @@ type N = { id: number; title: string; description: string; link: string; at: str
 
 export function NotificationBell({ items }: { items: N[] }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
   const { run } = useAction();
-  useEffect(() => {
-    const close = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, []);
   return (
-    <div ref={ref} className="relative">
-      <button onClick={() => setOpen(!open)} aria-label={`Notifications (${items.length} unread)`} aria-expanded={open} className="relative rounded-md p-2 text-muted hover:bg-sunken hover:text-ink">
+    <div className="relative">
+      <button ref={ref} onClick={() => setOpen(!open)} aria-label={`Notifications (${items.length} unread)`} aria-expanded={open} className="relative rounded-md p-2 text-muted hover:bg-sunken hover:text-ink">
         <Bell size={19} />
         {items.length > 0 && <span className="absolute -right-0.5 -top-0.5 min-w-5 rounded-full bg-accent px-1 text-center font-mono text-[10px] font-semibold leading-5 text-on-accent">{items.length}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-xl border border-line bg-raised shadow-card">
+        <FloatingPanel anchor={ref} open={open} onClose={() => setOpen(false)} label="Notifications" className="floating-notifications">
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
             <span className="text-sm font-semibold">Notifications</span>
             {items.length > 0 && <button onClick={() => run(() => markNotification("all"))} className="text-xs font-semibold text-brand hover:underline">Mark all read</button>}
@@ -43,7 +39,7 @@ export function NotificationBell({ items }: { items: N[] }) {
               ))}
             </ul>
           )}
-        </div>
+        </FloatingPanel>
       )}
     </div>
   );
